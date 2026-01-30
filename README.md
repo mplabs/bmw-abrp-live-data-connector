@@ -77,6 +77,9 @@ The MQTT password is the **BMW ID token** from `bmw.tokens.json` (created by the
 - `tls`: Enable TLS (default: true)
 - `clientId`: Optional custom client id
 - `keepaliveSeconds`: Keepalive interval (default: 60)
+- `username`: Optional override for MQTT username (default: `bmw.gcid`)
+- `password`: Optional override for MQTT password
+- `passwordToken`: Choose which BMW token to use as password when `mqtt.password` is not set (`id` | `access` | `refresh`, default: `id`)
 
 ### `mapping`
 Map ABRP telemetry fields to JSON paths in the BMW payload. Each field can have multiple fallback paths.
@@ -119,5 +122,6 @@ The device-code helper reads `config.yaml` and uses `bmw.clientId`. You can over
 
 ## Troubleshooting
 - If MQTT connects but no data is flowing, verify `bmw.gcid` and `bmw.vin`.
+- If MQTT says `Not authorized`, try setting `mqtt.passwordToken: "access"` in `config.yaml` and re-run the device-code flow to refresh tokens.
 - If ABRP rejects data, confirm your API key + user token and check mapping field names.
 - Enable extra logging by inspecting the console output; all logs are structured JSON.

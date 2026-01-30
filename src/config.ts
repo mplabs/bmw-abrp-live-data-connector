@@ -18,6 +18,10 @@ const assertObject = (value: unknown, name: string): Record<string, unknown> => 
     return value as Record<string, unknown>
 }
 
+const isPasswordToken = (value: unknown): value is 'id' | 'access' | 'refresh' => {
+    return value === 'id' || value === 'access' || value === 'refresh'
+}
+
 const normalizeConfig = (config: AppConfig): AppConfig => {
     return {
         ...config,
@@ -88,6 +92,9 @@ export const loadConfig = async (configPath?: string): Promise<AppConfig> => {
             clientId: typeof mqtt.clientId === 'string' ? mqtt.clientId : undefined,
             keepaliveSeconds:
                 typeof mqtt.keepaliveSeconds === 'number' ? mqtt.keepaliveSeconds : undefined,
+            username: typeof mqtt.username === 'string' ? mqtt.username : undefined,
+            password: typeof mqtt.password === 'string' ? mqtt.password : undefined,
+            passwordToken: isPasswordToken(mqtt.passwordToken) ? mqtt.passwordToken : undefined,
         },
         mapping: mapping as Record<string, string[]>,
         rateLimitSeconds:

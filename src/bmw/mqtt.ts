@@ -10,10 +10,23 @@ export const connectBmwMqtt = (
     onMessage: MessageHandler,
 ): MqttClient => {
     const clientId = mqttConfig.clientId ?? `abrp-bmw-${bmw.vin.slice(-6)}-${Date.now()}`
+    const tokenType = mqttConfig.passwordToken ?? 'id'
+    const tokenFromBmw = {
+        access: bmw.tokens.access,
+        refresh: bmw.tokens.refresh,
+        id: bmw.tokens.id,
+    }[tokenType]
+    const username = mqttConfig.username ?? bmw.gcid
+    const password = mqttConfig.password ?? tokenFromBmw
+
+    logger.info('MQTT auth configured', {
+        usernameSource: mqttConfig.username ? 'mqtt.username' : 'bmw.gcid',
+        passwordSource: mqttConfig.password ? 'mqtt.password' : `bmw.tokens.${tokenType}`,
+    })
 
     const client = mqtt.connect(mqttConfig.brokerUrl, {
-        username: bmw.gcid,
-        password: bmw.tokens.id,
+        username,
+        password,
         clientId,
         keepalive: mqttConfig.keepaliveSeconds,
         reconnectPeriod: 5000,

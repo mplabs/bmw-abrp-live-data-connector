@@ -39,6 +39,9 @@ export type MqttConfig = {
     tls?: boolean
     clientId?: string
     keepaliveSeconds?: number
+    username?: string
+    password?: string
+    passwordToken?: 'id' | 'access' | 'refresh'
 }
 
 export type AppConfig = {

@@ -55,6 +55,12 @@ MVP: Stream BMW CarData MQTT telemetry, normalize to ABRP fields, and push to AB
 - **Estimate:** 0.25h
 - **Notes:** Clarified mapping from myBMW CarData portal fields (Host/Port/Benutzername/Topic) to config values.
 
+### MQTT auth configurability
+- **Status:** Done
+- **Owner:** Agent
+- **Estimate:** 0.5h
+- **Notes:** Added mqtt username/password overrides and token selection for the password.
+
 ### Project setup & skeleton
 - **Status:** Done
 - **Owner:** Agent
