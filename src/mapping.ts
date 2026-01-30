@@ -1,35 +1,75 @@
 import type { Telemetry, TelemetryMapping } from './types'
 
-const parsePathSegment = (segment: string): { key: string; index?: number } => {
-    const match = /^([^\[]+)(?:\[(\d+)\])?$/.exec(segment)
-    if (!match) {
-        return { key: segment }
+type PathSegment = { type: 'key'; key: string } | { type: 'index'; index: number }
+
+const splitPath = (path: string): string[] => {
+    const segments: string[] = []
+    let current = ''
+    let inBracket = false
+
+    for (const char of path) {
+        if (char === '.' && !inBracket) {
+            if (current.length > 0) {
+                segments.push(current)
+                current = ''
+            }
+            continue
+        }
+        if (char === '[' && !inBracket) {
+            if (current.length > 0) {
+                segments.push(current)
+                current = ''
+            }
+            inBracket = true
+            current += char
+            continue
+        }
+        if (char === ']' && inBracket) {
+            current += char
+            inBracket = false
+            segments.push(current)
+            current = ''
+            continue
+        }
+        current += char
     }
-    const key = match[1]
-    const index = match[2] ? Number(match[2]) : undefined
-    return { key, index }
+
+    if (current.length > 0) {
+        segments.push(current)
+    }
+
+    return segments
+}
+
+const parsePathSegment = (segment: string): PathSegment => {
+    if (segment.startsWith('[') && segment.endsWith(']')) {
+        const inner = segment.slice(1, -1)
+        if (/^\d+$/.test(inner)) {
+            return { type: 'index', index: Number(inner) }
+        }
+        return { type: 'key', key: inner }
+    }
+    return { type: 'key', key: segment }
 }
 
 const getByPath = (input: unknown, path: string): unknown => {
     if (!input || typeof input !== 'object') {
         return undefined
     }
-    const segments = path.split('.')
+    const segments = splitPath(path).map(parsePathSegment)
     let current: unknown = input
     for (const segment of segments) {
+        if (segment.type === 'index') {
+            if (!Array.isArray(current)) {
+                return undefined
+            }
+            current = current[segment.index]
+            continue
+        }
         if (!current || typeof current !== 'object') {
             return undefined
         }
-        const { key, index } = parsePathSegment(segment)
-        const value = (current as Record<string, unknown>)[key]
-        if (typeof index === 'number') {
-            if (!Array.isArray(value)) {
-                return undefined
-            }
-            current = value[index]
-            continue
-        }
-        current = value
+        current = (current as Record<string, unknown>)[segment.key]
     }
     return current
 }

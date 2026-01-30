@@ -94,6 +94,14 @@ mapping:
     - "vehicle.drivetrain.electricEngine.charging.status"
 ```
 
+If the BMW payload uses flat keys with dots (for example `data["vehicle.powertrain.electric.battery.stateOfCharge.target"]`), wrap the key in brackets:
+
+```yaml
+mapping:
+  soc:
+    - "data[vehicle.powertrain.electric.battery.stateOfCharge.target].value"
+```
+
 Supported telemetry fields include:
 - `soc`
 - `is_charging`

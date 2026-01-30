@@ -22,6 +22,8 @@ mqtt:
 mapping:
   soc:
     - "vehicle.powertrain.electric.battery.stateOfCharge.target"
+    # For payloads where keys are flattened with dots:
+    # - "data[vehicle.powertrain.electric.battery.stateOfCharge.target].value"
   is_charging:
     - "vehicle.drivetrain.electricEngine.charging.status"
   is_plugged_in:

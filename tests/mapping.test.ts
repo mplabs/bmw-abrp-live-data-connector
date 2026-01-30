@@ -90,4 +90,21 @@ describe('extractTelemetry', () => {
 
         expect(telemetry.soc).toBe(77)
     })
+
+    it('supports bracketed literal keys containing dots', () => {
+        const mapping: TelemetryMapping = {
+            soc: ['data[vehicle.powertrain.electric.battery.stateOfCharge.target].value'],
+        }
+        const payload = {
+            data: {
+                'vehicle.powertrain.electric.battery.stateOfCharge.target': {
+                    value: 64,
+                },
+            },
+        }
+
+        const telemetry = extractTelemetry(payload, mapping)
+
+        expect(telemetry.soc).toBe(64)
+    })
 })
