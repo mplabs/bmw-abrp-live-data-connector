@@ -117,6 +117,9 @@ Controls log verbosity (`debug`, `info`, `warn`, `error`). Default is `info`.
 ## Device code flow notes
 The device-code helper reads `config.yaml` and uses `bmw.clientId`. You can override the OAuth scope via `BMW_SCOPE` (default: `openid cardata cardata.streaming`).
 
+### Token refresh
+The connector refreshes BMW tokens automatically using the refresh token in `bmw.tokens.json`. It updates the tokens file and reconnects MQTT when a new ID token is issued, so you don’t need to re-run the device-code flow during normal operation.
+
 ## Security
 - `config.yaml` and `bmw.tokens.json` are in `.gitignore` for a reason. Keep secrets out of git.
 - Prefer using `config.example.yaml` as a template and store real credentials locally.

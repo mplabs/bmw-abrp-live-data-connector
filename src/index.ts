@@ -1,12 +1,14 @@
 import { loadConfig } from './config'
 import { logger, setLogLevel } from './logger'
 import { connectBmwMqtt } from './bmw/mqtt'
+import { BmwTokenManager } from './bmw/tokens'
 import { AbrpClient } from './abrp/client'
 import { extractTelemetry } from './mapping'
 import { RateLimiter } from './rate-limit'
 
 const main = async () => {
-    const config = await loadConfig()
+    const configPath = process.env.CONFIG_PATH || 'config.yaml'
+    const config = await loadConfig(configPath)
     setLogLevel(config.logLevel ?? 'info')
 
     logger.info('Config loaded', {
@@ -15,13 +17,16 @@ const main = async () => {
         logLevel: config.logLevel ?? 'info',
     })
 
+    const tokenManager = new BmwTokenManager(config.bmw, configPath)
+    await tokenManager.refreshIfNeeded()
+
     const abrp = new AbrpClient(config.abrp)
     const rateLimiter = new RateLimiter(config.rateLimitSeconds ?? 10)
 
     let messageCount = 0
     let lastMessageAt: number | null = null
     let rawLogged = false
-    const client = connectBmwMqtt(config.bmw, config.mqtt, async (_topic, payload) => {
+    const handleMessage = async (_topic: string, payload: Buffer) => {
         messageCount += 1
         const nowMs = Date.now()
         if (lastMessageAt === null || nowMs - lastMessageAt >= 1000) {
@@ -72,7 +77,9 @@ const main = async () => {
         } catch (error) {
             logger.error('ABRP telemetry send failed', { error: (error as Error).message })
         }
-    })
+    }
+
+    let client = connectBmwMqtt(config.bmw, config.mqtt, handleMessage)
 
     let shuttingDown = false
     const shutdown = (signal: NodeJS.Signals) => {
@@ -81,6 +88,10 @@ const main = async () => {
         }
         shuttingDown = true
         logger.info('Shutting down', { signal })
+        if (refreshTimer) {
+            clearInterval(refreshTimer)
+            refreshTimer = null
+        }
         client.end(true, () => {
             process.exit(0)
         })
@@ -88,6 +99,17 @@ const main = async () => {
 
     process.once('SIGINT', () => shutdown('SIGINT'))
     process.once('SIGTERM', () => shutdown('SIGTERM'))
+
+    let refreshTimer: NodeJS.Timeout | null = setInterval(async () => {
+        if (shuttingDown) {
+            return
+        }
+        const refreshed = await tokenManager.refreshIfNeeded()
+        if (refreshed) {
+            client.end(true)
+            client = connectBmwMqtt(config.bmw, config.mqtt, handleMessage)
+        }
+    }, 60_000)
 }
 
 main().catch((error) => {

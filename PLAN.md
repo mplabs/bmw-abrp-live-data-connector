@@ -79,6 +79,12 @@ MVP: Stream BMW CarData MQTT telemetry, normalize to ABRP fields, and push to AB
 - **Estimate:** 0.5h
 - **Notes:** Simplified mapping to use BMW data keys only (payload.data[KEY].value).
 
+### BMW token auto-refresh
+- **Status:** Done
+- **Owner:** Agent
+- **Estimate:** 1h
+- **Notes:** Refresh tokens via refresh_token grant and reconnect MQTT with new ID token.
+
 ### Project setup & skeleton
 - **Status:** Done
 - **Owner:** Agent
