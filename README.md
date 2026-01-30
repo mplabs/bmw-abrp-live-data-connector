@@ -124,4 +124,5 @@ The device-code helper reads `config.yaml` and uses `bmw.clientId`. You can over
 - If MQTT connects but no data is flowing, verify `bmw.gcid` and `bmw.vin`.
 - If MQTT says `Not authorized`, try setting `mqtt.passwordToken: "access"` in `config.yaml` and re-run the device-code flow to refresh tokens.
 - If ABRP rejects data, confirm your API key + user token and check mapping field names.
+- To inspect the ID token expiry/scopes, run `bun run debug:token`.
 - Enable extra logging by inspecting the console output; all logs are structured JSON.
