@@ -28,6 +28,17 @@ const loadRawConfig = async (configPath: string): Promise<Record<string, unknown
     return parsed as Record<string, unknown>
 }
 
+const writeRawConfig = async (configPath: string, config: Record<string, unknown>): Promise<void> => {
+    const ext = path.extname(configPath).toLowerCase()
+    const output =
+        ext === '.yaml' || ext === '.yml'
+            ? YAML.stringify(config)
+            : JSON.stringify(config, null, 2)
+    await writeFile(configPath, output)
+}
+
+const looksLikePlaceholder = (value: string): boolean => value.includes('<') && value.includes('>')
+
 const requestDeviceCode = async (endpoint: string, clientId: string, scope: string) => {
     const body = new URLSearchParams({
         client_id: clientId,
@@ -177,6 +188,24 @@ const main = async () => {
     await writeFile(outputPath, JSON.stringify(output, null, 2))
 
     logger.info('Tokens stored', { outputPath })
+
+    if (typeof output.gcid === 'string') {
+        const configRoot = config as Record<string, unknown>
+        const bmwConfig = (configRoot.bmw ?? {}) as Record<string, unknown>
+        const existingGcid = typeof bmwConfig.gcid === 'string' ? bmwConfig.gcid : ''
+
+        if (!existingGcid || looksLikePlaceholder(existingGcid)) {
+            bmwConfig.gcid = output.gcid
+        }
+
+        if (typeof bmwConfig.tokensFile !== 'string' || bmwConfig.tokensFile.length === 0) {
+            bmwConfig.tokensFile = outputPath
+        }
+
+        configRoot.bmw = bmwConfig
+        await writeRawConfig(configPath, configRoot)
+        logger.info('Config updated with GCID and tokensFile', { configPath })
+    }
 }
 
 main().catch((error) => {
