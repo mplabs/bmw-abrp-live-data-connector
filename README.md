@@ -92,9 +92,8 @@ The MQTT password is the **BMW ID token** from `bmw.tokens.json` (created by the
 - `clientId`: BMW app client id (required for device code flow)
 - `gcid`: BMW GCID used as MQTT username
 - `vin`: Vehicle VIN
-- `tokensFile`: JSON file containing `access`, `refresh`, `id` tokens (recommended)
+- `tokensFile`: JSON file containing `access`, `refresh`, `id` tokens (required)
 - `deviceCodeEndpoint` / `tokenEndpoint`: Override BMW OAuth endpoints if needed
-- `tokens`: Inline access/refresh/id tokens (fallback; not recommended for long-term use)
 
 ### `abrp`
 - `apiKey`: ABRP API key
@@ -105,9 +104,6 @@ The MQTT password is the **BMW ID token** from `bmw.tokens.json` (created by the
 - `tls`: Enable TLS (default: true)
 - `clientId`: Optional custom client id
 - `keepaliveSeconds`: Keepalive interval (default: 60)
-- `username`: Optional override for MQTT username (default: `bmw.gcid`)
-- `password`: Optional override for MQTT password
-- `passwordToken`: Choose which BMW token to use as password when `mqtt.password` is not set (`id` | `access` | `refresh`, default: `id`)
 
 ### `mapping`
 Map ABRP telemetry fields to BMW **data keys** (the keys inside the `data` map from the stream). Each field can have multiple fallback keys.
@@ -142,6 +138,9 @@ Minimum seconds between ABRP telemetry pushes (default: 10).
 ### `logLevel`
 Controls log verbosity (`debug`, `info`, `warn`, `error`). Default is `info`.
 
+## Telemetry flow
+BMW streaming messages are event-based and typically carry a single key update. The connector keeps the latest values it has seen and sends a merged snapshot to ABRP whenever SoC is available (and the rate limit allows it).
+
 ## Device code flow notes
 The device-code helper reads `config.yaml` and uses `bmw.clientId`. You can override the OAuth scope via `BMW_SCOPE` (default: `openid cardata cardata.streaming`).
 
@@ -158,7 +157,7 @@ The connector refreshes BMW tokens automatically using the refresh token in `bmw
 
 ## Troubleshooting
 - If MQTT connects but no data is flowing, verify `bmw.gcid` and `bmw.vin`.
-- If MQTT says `Not authorized`, try setting `mqtt.passwordToken: "access"` in `config.yaml` and re-run the device-code flow to refresh tokens.
+- If MQTT says `Not authorized`, re-run the device-code flow to refresh tokens.
 - If ABRP rejects data, confirm your API key + user token and check mapping field names.
 - To inspect the ID token expiry/scopes, run `bun run debug:token`.
 - Enable extra logging by inspecting the console output; all logs are structured JSON.

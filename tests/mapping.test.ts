@@ -12,7 +12,6 @@ const baseMapping: TelemetryMapping = {
     power: ['vehicle.powertrain.electric.power'],
     charging_power: ['vehicle.powertrain.electric.chargingPower'],
     remaining_charge_time: ['vehicle.powertrain.electric.remainingChargingTime'],
-    utc: ['timestamp'],
 }
 
 describe('extractTelemetry', () => {
@@ -55,7 +54,7 @@ describe('extractTelemetry', () => {
         const telemetry = extractTelemetry(payload, baseMapping)
 
         expect(telemetry).toEqual({
-            utc: 1769760551,
+            utc: 1_700_000_000,
             soc: 82.5,
             is_charging: true,
             is_plugged_in: true,
@@ -85,19 +84,14 @@ describe('extractTelemetry', () => {
         expect(telemetry.is_plugged_in).toBe(false)
     })
 
-    it('reads top-level keys when no data entry exists', () => {
+    it('returns undefined when keys are not present in data', () => {
         const mapping: TelemetryMapping = {
-            soc: ['soc'],
-            utc: ['timestamp'],
+            soc: ['vehicle.drivetrain.batteryManagement.header'],
         }
-        const payload = {
-            soc: 55,
-            timestamp: '2026-01-30T08:09:11.594Z',
-        }
+        const payload = { data: {} }
 
         const telemetry = extractTelemetry(payload, mapping)
 
-        expect(telemetry.soc).toBe(55)
-        expect(telemetry.utc).toBe(1769760551)
+        expect(telemetry.soc).toBeUndefined()
     })
 })

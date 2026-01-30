@@ -14,7 +14,7 @@ const writeYaml = async (filePath: string, data: string) => {
 }
 
 describe('loadConfig', () => {
-    it('loads tokens from tokensFile when inline tokens are missing', async () => {
+    it('loads tokens from tokensFile', async () => {
         const tempDir = path.join(tmpdir(), `abrp-test-${randomUUID()}`)
         await mkdir(tempDir, { recursive: true })
 
@@ -51,16 +51,9 @@ mapping:
         await rm(tempDir, { recursive: true, force: true })
     })
 
-    it('prefers inline tokens over tokensFile when both are provided', async () => {
+    it('requires a tokensFile entry', async () => {
         const tempDir = path.join(tmpdir(), `abrp-test-${randomUUID()}`)
         await mkdir(tempDir, { recursive: true })
-
-        const tokensPath = path.join(tempDir, 'bmw.tokens.json')
-        await writeJson(tokensPath, {
-            access: 'access-file',
-            refresh: 'refresh-file',
-            id: 'id-file',
-        })
 
         const configPath = path.join(tempDir, 'config.yaml')
         await writeYaml(
@@ -68,11 +61,6 @@ mapping:
             `bmw:
   gcid: "gcid"
   vin: "vin"
-  tokensFile: "bmw.tokens.json"
-  tokens:
-    access: "access-inline"
-    refresh: "refresh-inline"
-    id: "id-inline"
 abrp:
   apiKey: "api"
   userToken: "user"
@@ -83,11 +71,7 @@ mapping:
 `,
         )
 
-        const config = await loadConfig(configPath)
-
-        expect(config.bmw.tokens.access).toBe('access-inline')
-        expect(config.bmw.tokens.refresh).toBe('refresh-inline')
-        expect(config.bmw.tokens.id).toBe('id-inline')
+        await expect(loadConfig(configPath)).rejects.toThrow('bmw.tokensFile')
 
         await rm(tempDir, { recursive: true, force: true })
     })

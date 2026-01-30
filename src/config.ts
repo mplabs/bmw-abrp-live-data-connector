@@ -18,10 +18,6 @@ const assertObject = (value: unknown, name: string): Record<string, unknown> => 
     return value as Record<string, unknown>
 }
 
-const isPasswordToken = (value: unknown): value is 'id' | 'access' | 'refresh' => {
-    return value === 'id' || value === 'access' || value === 'refresh'
-}
-
 const isLogLevel = (value: unknown): value is 'debug' | 'info' | 'warn' | 'error' => {
     return value === 'debug' || value === 'info' || value === 'warn' || value === 'error'
 }
@@ -58,13 +54,9 @@ export const loadConfig = async (configPath?: string): Promise<AppConfig> => {
 
     const root = assertObject(parsed, 'root')
     const bmw = assertObject(root.bmw, 'bmw')
-    const tokensFile = typeof bmw.tokensFile === 'string' ? bmw.tokensFile : undefined
-    const tokensFromConfig =
-        bmw.tokens && typeof bmw.tokens === 'object'
-            ? (bmw.tokens as Record<string, unknown>)
-            : undefined
-    const tokensFromFile = tokensFile ? await loadTokensFromFile(tokensFile, configDir) : undefined
-    const bmwTokens = assertObject(tokensFromConfig ?? tokensFromFile, 'bmw.tokens')
+    const tokensFile = assertString(bmw.tokensFile, 'bmw.tokensFile')
+    const tokensFromFile = await loadTokensFromFile(tokensFile, configDir)
+    const bmwTokens = assertObject(tokensFromFile, 'bmw.tokens')
     const mqtt = assertObject(root.mqtt, 'mqtt')
     const abrp = assertObject(root.abrp, 'abrp')
     const mapping = assertObject(root.mapping, 'mapping')
@@ -97,9 +89,6 @@ export const loadConfig = async (configPath?: string): Promise<AppConfig> => {
             clientId: typeof mqtt.clientId === 'string' ? mqtt.clientId : undefined,
             keepaliveSeconds:
                 typeof mqtt.keepaliveSeconds === 'number' ? mqtt.keepaliveSeconds : undefined,
-            username: typeof mqtt.username === 'string' ? mqtt.username : undefined,
-            password: typeof mqtt.password === 'string' ? mqtt.password : undefined,
-            passwordToken: isPasswordToken(mqtt.passwordToken) ? mqtt.passwordToken : undefined,
         },
         mapping: mapping as Record<string, string[]>,
         rateLimitSeconds:

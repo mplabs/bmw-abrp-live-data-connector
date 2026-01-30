@@ -14,11 +14,6 @@ mqtt:
   # myBMW portal "Host" + "Port"
   brokerUrl: "mqtts://customer.streaming-cardata.bmwgroup.com:9000"
   tls: true
-  # Optional: override MQTT auth (default uses GCID + id token)
-  # username: "<MQTT_USERNAME>"
-  # password: "<MQTT_PASSWORD>"
-  # Optional: choose which BMW token to use as password (id/access/refresh)
-  # passwordToken: "id"
 mapping:
   soc:
     - "vehicle.drivetrain.batteryManagement.header"

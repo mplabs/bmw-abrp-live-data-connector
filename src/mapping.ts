@@ -15,9 +15,6 @@ const getMetricValue = (payload: unknown, key: string): unknown => {
             return entry
         }
     }
-    if (key in root) {
-        return root[key]
-    }
     return undefined
 }
 
