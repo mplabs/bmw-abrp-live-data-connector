@@ -19,6 +19,12 @@ MVP: Stream BMW CarData MQTT telemetry, normalize to ABRP fields, and push to AB
 - **Estimate:** 0.5–1h
 - **Notes:** Added CI workflow to install deps, run tests, and build on pushes to main.
 
+### Release helper script
+- **Status:** Done
+- **Owner:** Agent
+- **Estimate:** 0.5h
+- **Notes:** Added script to tag releases based on package.json version (push optional).
+
 ### Project setup & skeleton
 - **Status:** Done
 - **Owner:** Agent
