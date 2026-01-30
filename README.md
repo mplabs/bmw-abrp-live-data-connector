@@ -10,7 +10,7 @@ A Bun-based service that listens to BMW CarData Streaming (MQTT), normalizes the
 
 ## Requirements
 - Docker + Docker Compose
-- BMW CarData Streaming credentials (clientId, GCID, VIN, tokens)
+- BMW CarData Streaming setup (clientId, GCID, VIN, broker host/port)
 - ABRP API key + user token
 
 Optional (for local development):
@@ -43,6 +43,7 @@ docker run --rm -it \\
 6) Copy `config.example.yaml` to `config.yaml` and fill in:
    - `bmw.clientId`, `bmw.gcid`, `bmw.vin`, `mqtt.brokerUrl`
    - `abrp.apiKey`, `abrp.userToken`
+   - `bmw.tokensFile` should point to the `bmw.tokens.json` created by the device-code flow
 7) Start the connector with Docker:
 
 ```bash
