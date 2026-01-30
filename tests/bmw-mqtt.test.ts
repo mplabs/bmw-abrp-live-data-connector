@@ -37,8 +37,8 @@ describe('connectBmwMqtt', () => {
         const { connectBmwMqtt } = await import('../src/bmw/mqtt')
 
         const bmw: BmwConfig = {
-            gcid: 'gcid-123',
-            vin: 'VIN1234567890',
+            username: 'user-123',
+            topic: 'TOPIC1234567890',
             tokens: {
                 access: 'access',
                 refresh: 'refresh',
@@ -61,7 +61,7 @@ describe('connectBmwMqtt', () => {
         expect(connectArgs).not.toBeNull()
         expect(connectArgs?.url).toBe('mqtt://broker')
         expect(connectArgs?.options).toMatchObject({
-            username: 'gcid-123',
+            username: 'user-123',
             password: 'id-token',
             keepalive: 30,
             reconnectPeriod: 5000,
@@ -72,7 +72,7 @@ describe('connectBmwMqtt', () => {
 
         onConnect?.()
         expect(subscribeArgs).toEqual({
-            topic: 'gcid-123/VIN1234567890/#',
+            topic: 'user-123/TOPIC1234567890/#',
             options: { qos: 0 },
         })
     })
@@ -84,8 +84,8 @@ describe('connectBmwMqtt', () => {
         Date.now = () => 1_700_000_000_000
 
         const bmw: BmwConfig = {
-            gcid: 'gcid-456',
-            vin: 'WBA12345678901234',
+            username: 'user-456',
+            topic: 'TOPIC-ABCDEF123456',
             tokens: {
                 access: 'access',
                 refresh: 'refresh',
@@ -102,7 +102,7 @@ describe('connectBmwMqtt', () => {
 
         connectBmwMqtt(bmw, mqttConfig, () => undefined)
 
-        expect(connectArgs?.options.clientId).toBe('abrp-bmw-901234-1700000000000')
+        expect(connectArgs?.options.clientId).toBe('abrp-bmw-123456-1700000000000')
 
         Date.now = realNow
     })

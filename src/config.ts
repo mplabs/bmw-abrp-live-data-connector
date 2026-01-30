@@ -31,8 +31,8 @@ const ConfigSchema = z
         bmw: z
             .object({
                 clientId: z.string().min(1),
-                gcid: z.string().min(1),
-                vin: z.string().min(1),
+                username: z.string().min(1),
+                topic: z.string().min(1),
                 tokensFile: z.string().min(1),
                 deviceCodeEndpoint: z.string().url().optional(),
                 tokenEndpoint: z.string().url().optional(),
@@ -46,7 +46,8 @@ const ConfigSchema = z
             .strict(),
         mqtt: z
             .object({
-                brokerUrl: z.string().min(1),
+                host: z.string().min(1),
+                port: z.number().int().positive(),
                 tls: z.boolean().optional(),
                 clientId: z.string().optional(),
                 keepaliveSeconds: z.number().int().optional(),
@@ -91,12 +92,14 @@ export const loadConfig = async (configPath?: string): Promise<AppConfig> => {
     const root = parseWithSchema(ConfigSchema, parsed, 'config')
     const tokensFromFile = await loadTokensFromFile(root.bmw.tokensFile, configDir)
     const bmwTokens = parseWithSchema(TokensSchema, tokensFromFile, 'bmw.tokens')
+    const tls = root.mqtt.tls ?? true
+    const brokerUrl = `${tls ? 'mqtts' : 'mqtt'}://${root.mqtt.host}:${root.mqtt.port}`
 
     const config: AppConfig = {
         bmw: {
             clientId: root.bmw.clientId,
-            gcid: root.bmw.gcid,
-            vin: root.bmw.vin,
+            username: root.bmw.username,
+            topic: root.bmw.topic,
             tokensFile: root.bmw.tokensFile,
             deviceCodeEndpoint: root.bmw.deviceCodeEndpoint ?? BMW_DEVICE_CODE_ENDPOINT,
             tokenEndpoint: root.bmw.tokenEndpoint ?? BMW_TOKEN_ENDPOINT,
@@ -111,8 +114,8 @@ export const loadConfig = async (configPath?: string): Promise<AppConfig> => {
             userToken: root.abrp.userToken,
         },
         mqtt: {
-            brokerUrl: root.mqtt.brokerUrl,
-            tls: root.mqtt.tls,
+            brokerUrl,
+            tls,
             clientId: root.mqtt.clientId,
             keepaliveSeconds: root.mqtt.keepaliveSeconds,
         },

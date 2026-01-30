@@ -30,14 +30,15 @@ describe('loadConfig', () => {
             configPath,
             `bmw:
   clientId: "client-id"
-  gcid: "gcid"
-  vin: "vin"
+  username: "username"
+  topic: "topic"
   tokensFile: "bmw.tokens.json"
 abrp:
   apiKey: "api"
   userToken: "user"
 mqtt:
-  brokerUrl: "mqtt://broker"
+  host: "broker.example"
+  port: 9000
 mapping:
   soc: ["vehicle.soc"]
 `,
@@ -45,6 +46,7 @@ mapping:
 
         const config = await loadConfig(configPath)
 
+        expect(config.mqtt.brokerUrl).toBe('mqtts://broker.example:9000')
         expect(config.bmw.tokens.access).toBe('access-file')
         expect(config.bmw.tokens.refresh).toBe('refresh-file')
         expect(config.bmw.tokens.id).toBe('id-file')
@@ -61,13 +63,14 @@ mapping:
             configPath,
             `bmw:
   clientId: "client-id"
-  gcid: "gcid"
-  vin: "vin"
+  username: "username"
+  topic: "topic"
 abrp:
   apiKey: "api"
   userToken: "user"
 mqtt:
-  brokerUrl: "mqtt://broker"
+  host: "broker.example"
+  port: 9000
 mapping:
   soc: ["vehicle.soc"]
 `,

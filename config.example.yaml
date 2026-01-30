@@ -1,9 +1,9 @@
 bmw:
   clientId: "<BMW_CLIENT_ID>"
-  # myBMW portal "Benutzername" (GCID)
-  gcid: "<BMW_GCID>"
-  # myBMW portal "Topic" (VIN)
-  vin: "<VEHICLE_VIN>"
+  # myBMW portal "Benutzername"
+  username: "<BMW_BENUTZERNAME>"
+  # myBMW portal "Topic"
+  topic: "<BMW_TOPIC>"
   tokensFile: "bmw.tokens.json"
   deviceCodeEndpoint: "https://customer.bmwgroup.com/gcdm/oauth/device/code"
   tokenEndpoint: "https://customer.bmwgroup.com/gcdm/oauth/token"
@@ -11,8 +11,10 @@ abrp:
   apiKey: "<ABRP_API_KEY>"
   userToken: "<ABRP_USER_TOKEN>"
 mqtt:
-  # myBMW portal "Host" + "Port"
-  brokerUrl: "mqtts://customer.streaming-cardata.bmwgroup.com:9000"
+  # myBMW portal "Host"
+  host: "customer.streaming-cardata.bmwgroup.com"
+  # myBMW portal "Port"
+  port: 9000
   tls: true
 mapping:
   soc:

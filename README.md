@@ -18,18 +18,26 @@ Optional (for local development):
 
 ## Setup (myBMW CarData Streaming)
 1) Create a BMW CarData client and subscribe it to **CarData Streaming** in the myBMW portal: https://www.bmw.de/de-de/mybmw/mapped-vehicle/public/car-data-info/
-2) Configure a stream and select the attributes you want to receive (make sure the SoC key you plan to map is included). The stream setup & credentials are described here: https://bmw-cardata.bmwgroup.com/customer/public/api-documentation/Id-Streaming
-3) Note the streaming credentials shown by the portal (use the labels exactly as displayed):
-   - **Host + Port** → `mqtt.brokerUrl`
-   - **Benutzername** → `bmw.gcid`
-   - **Topic** → `bmw.vin`
+2) Configure a stream and select these attributes (minimum set for ABRP):
+   - `vehicle.drivetrain.batteryManagement.header` (SoC)
+   - `vehicle.drivetrain.electricEngine.charging.status`
+   - `vehicle.body.chargingPort.status`
+   - `vehicle.cabin.infotainment.navigation.currentLocation.latitude`
+   - `vehicle.cabin.infotainment.navigation.currentLocation.longitude`
+   - `vehicle.vehicle.avgSpeed`
+   - `vehicle.powertrain.electric.battery.charging.power`
+   - `vehicle.drivetrain.electricEngine.charging.timeRemaining`
+3) Copy the stream credentials exactly as shown in the portal:
+   - **Host** + **Port** → `mqtt.host` and `mqtt.port`
+   - **Benutzername** → `bmw.username`
+   - **Topic** → `bmw.topic`
 4) Build the Docker image (needed for the device-code flow):
 
 ```bash
 docker build -t abrp-live-connector .
 ```
 
-5) Run the device-code flow to generate tokens (spec + examples): https://bmw-cardata.bmwgroup.com/customer/public/api-specification and https://documenter.getpostman.com/view/7396339/SWTK5a8w
+5) Run the device-code flow to generate tokens
 
 ```bash
 BMW_SCOPE="openid cardata:api:read cardata:streaming:read" \\
@@ -41,7 +49,7 @@ docker run --rm -it \\
 ```
 
 6) Copy `config.example.yaml` to `config.yaml` and fill in:
-   - `bmw.clientId`, `bmw.gcid`, `bmw.vin`, `mqtt.brokerUrl`
+   - `bmw.clientId`, `bmw.username`, `bmw.topic`, `mqtt.host`, `mqtt.port`
    - `abrp.apiKey`, `abrp.userToken`
    - `bmw.tokensFile` should point to the `bmw.tokens.json` created by the device-code flow
 7) Start the connector with Docker:
@@ -97,16 +105,17 @@ The app loads `config.yaml` by default. Override with `CONFIG_PATH=/path/to/conf
 ### Values from the myBMW CarData Streaming portal
 Use the myBMW portal to fill in these fields:
 
-- **Host** + **Port** → `mqtt.brokerUrl` (e.g. `mqtts://customer.streaming-cardata.bmwgroup.com:9000`)
-- **Benutzername** → `bmw.gcid`
-- **Topic** → `bmw.vin`
+- **Host** → `mqtt.host`
+- **Port** → `mqtt.port`
+- **Benutzername** → `bmw.username`
+- **Topic** → `bmw.topic`
 
 The MQTT password is the **BMW ID token** from `bmw.tokens.json` (created by the device-code flow). The connector uses that automatically.
 
 ### `bmw`
 - `clientId`: BMW app client id (required for device code flow)
-- `gcid`: **Benutzername** from the myBMW portal
-- `vin`: **Topic** from the myBMW portal
+- `username`: **Benutzername** from the myBMW portal
+- `topic`: **Topic** from the myBMW portal
 - `tokensFile`: JSON file containing `access`, `refresh`, `id` tokens (required)
 - `deviceCodeEndpoint` / `tokenEndpoint`: Override BMW OAuth endpoints if needed
 
@@ -115,7 +124,8 @@ The MQTT password is the **BMW ID token** from `bmw.tokens.json` (created by the
 - `userToken`: ABRP user token (used as `token` query param)
 
 ### `mqtt`
-- `brokerUrl`: BMW MQTT broker URL (from BMW CarData Streaming portal; typically `mqtts://…:8883`)
+- `host`: **Host** from the myBMW portal
+- `port`: **Port** from the myBMW portal
 - `tls`: Enable TLS (default: true)
 - `clientId`: Optional custom client id
 - `keepaliveSeconds`: Keepalive interval (default: 60)
@@ -133,7 +143,7 @@ mapping:
     - "vehicle.drivetrain.electricEngine.charging.status"
 ```
 
-The connector reads `payload.data[KEY].value` for each key. If a key isn’t in `data`, it will fall back to a top-level field with the same name (rare in BMW payloads).
+The connector reads `payload.data[KEY].value` for each key.
 
 Supported telemetry fields include:
 - `soc`
@@ -175,7 +185,7 @@ The connector refreshes BMW tokens automatically using the refresh token in `bmw
 - Functional spec: `BMW-Telemetry-to-ABRP-Live-Connector-FSD.md`
 
 ## Troubleshooting
-- If MQTT connects but no data is flowing, verify `bmw.gcid` and `bmw.vin`.
+- If MQTT connects but no data is flowing, verify `bmw.username` and `bmw.topic`.
 - If MQTT says `Not authorized`, re-run the device-code flow to refresh tokens.
 - If ABRP rejects data, confirm your API key + user token and check mapping field names.
 - To inspect the ID token expiry/scopes, run `bun run debug:token`.

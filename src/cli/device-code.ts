@@ -194,10 +194,11 @@ const main = async () => {
     if (typeof output.gcid === 'string') {
         const configRoot = config as Record<string, unknown>
         const bmwConfig = (configRoot.bmw ?? {}) as Record<string, unknown>
-        const existingGcid = typeof bmwConfig.gcid === 'string' ? bmwConfig.gcid : ''
+        const existingUsername =
+            typeof bmwConfig.username === 'string' ? bmwConfig.username : ''
 
-        if (!existingGcid || looksLikePlaceholder(existingGcid)) {
-            bmwConfig.gcid = output.gcid
+        if (!existingUsername || looksLikePlaceholder(existingUsername)) {
+            bmwConfig.username = output.gcid
         }
 
         if (typeof bmwConfig.tokensFile !== 'string' || bmwConfig.tokensFile.length === 0) {

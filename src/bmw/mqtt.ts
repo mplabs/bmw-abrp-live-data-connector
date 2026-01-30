@@ -9,8 +9,8 @@ export const connectBmwMqtt = (
     mqttConfig: MqttConfig,
     onMessage: MessageHandler,
 ): MqttClient => {
-    const clientId = mqttConfig.clientId ?? `abrp-bmw-${bmw.vin.slice(-6)}-${Date.now()}`
-    const username = bmw.gcid
+    const clientId = mqttConfig.clientId ?? `abrp-bmw-${bmw.topic.slice(-6)}-${Date.now()}`
+    const username = bmw.username
     const password = bmw.tokens.id
 
     logger.info('MQTT auth configured', { username })
@@ -24,7 +24,7 @@ export const connectBmwMqtt = (
     })
 
     client.on('connect', () => {
-        const topic = `${bmw.gcid}/${bmw.vin}/#`
+        const topic = `${bmw.username}/${bmw.topic}/#`
         logger.info('MQTT connected', { topic })
         client.subscribe(topic, { qos: 0 }, (err) => {
             if (err) {
