@@ -38,37 +38,43 @@ Optional (for local development):
 docker build -t mplabs/bmw-abrp-live-connector .
 ```
 
-6) Create a real config file (an empty file will fail). Start from the example and fill in:
+6) Create folders for config + data (so Docker mounts directories, not files):
+
+```bash
+mkdir -p config data
+```
+
+7) Create a real config file (an empty file will fail). Start from the example and fill in:
    - `bmw.clientId`, `bmw.username`, `bmw.topic`
    - `mqtt.host`, `mqtt.port`
+   - `bmw.tokensFile: "/data/bmw.tokens.json"`
    - (You can fill ABRP later, but the file must be valid YAML.)
 
 ```bash
-cp config.example.yaml config.yaml
+cp config.example.yaml config/config.yaml
 ```
 
-7) Create the tokens file placeholder (Docker needs the file to exist):
+8) Create the tokens file placeholder (Docker needs the file to exist):
 
 ```bash
-touch bmw.tokens.json
+touch data/bmw.tokens.json
 ```
 
-8) Run the device-code flow to generate tokens
+9) Run the device-code flow to generate tokens
 
 ```bash
 docker run --rm -it \\
-  -v $(pwd)/config.yaml:/app/config.yaml:ro \\
-  -v $(pwd)/bmw.tokens.json:/app/bmw.tokens.json \\
-  -e CONFIG_PATH=/app/config.yaml \\
+  -v $(pwd)/config:/config:ro \\
+  -v $(pwd)/data:/data \\
+  -e CONFIG_PATH=/config/config.yaml \\
   mplabs/bmw-abrp-live-connector bun run src/cli/device-code.ts
 ```
 
 Hint: This connector only works if **CarData Streaming** is enabled for your client in the myBMW portal.
 
-9) Add ABRP credentials and confirm `bmw.tokensFile` points to `bmw.tokens.json`:
+10) Add ABRP credentials in `config/config.yaml` and confirm `bmw.tokensFile` points to `/data/bmw.tokens.json`:
    - `abrp.apiKey`, `abrp.userToken`
-   - `bmw.tokensFile: "bmw.tokens.json"`
-10) Start the connector with Docker:
+11) Start the connector with Docker:
 
 ```bash
 cp docker-compose.example.yml docker-compose.yml
@@ -85,6 +91,9 @@ References:
 Run with docker-compose (recommended):
 
 ```bash
+mkdir -p config data
+cp config.example.yaml config/config.yaml
+touch data/bmw.tokens.json
 cp docker-compose.example.yml docker-compose.yml
 docker compose up -d
 ```
@@ -94,9 +103,9 @@ Run directly with docker:
 ```bash
 docker build -t mplabs/bmw-abrp-live-connector .
 docker run --rm \\
-  -v $(pwd)/config.yaml:/app/config.yaml:ro \\
-  -v $(pwd)/bmw.tokens.json:/app/bmw.tokens.json:ro \\
-  -e CONFIG_PATH=/app/config.yaml \\
+  -v $(pwd)/config:/config:ro \\
+  -v $(pwd)/data:/data \\
+  -e CONFIG_PATH=/config/config.yaml \\
   mplabs/bmw-abrp-live-connector
 ```
 
