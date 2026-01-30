@@ -73,11 +73,11 @@ MVP: Stream BMW CarData MQTT telemetry, normalize to ABRP fields, and push to AB
 - **Estimate:** 0.5h
 - **Notes:** Added logLevel config and MQTT message cadence debug output.
 
-### Mapping bracket keys
+### BMW data-key mapping
 - **Status:** Done
 - **Owner:** Agent
 - **Estimate:** 0.5h
-- **Notes:** Added support for bracketed literal keys in JSON-path mapping.
+- **Notes:** Simplified mapping to use BMW data keys only (payload.data[KEY].value).
 
 ### Project setup & skeleton
 - **Status:** Done

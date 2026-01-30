@@ -1,77 +1,24 @@
 import type { Telemetry, TelemetryMapping } from './types'
 
-type PathSegment = { type: 'key'; key: string } | { type: 'index'; index: number }
-
-const splitPath = (path: string): string[] => {
-    const segments: string[] = []
-    let current = ''
-    let inBracket = false
-
-    for (const char of path) {
-        if (char === '.' && !inBracket) {
-            if (current.length > 0) {
-                segments.push(current)
-                current = ''
-            }
-            continue
-        }
-        if (char === '[' && !inBracket) {
-            if (current.length > 0) {
-                segments.push(current)
-                current = ''
-            }
-            inBracket = true
-            current += char
-            continue
-        }
-        if (char === ']' && inBracket) {
-            current += char
-            inBracket = false
-            segments.push(current)
-            current = ''
-            continue
-        }
-        current += char
-    }
-
-    if (current.length > 0) {
-        segments.push(current)
-    }
-
-    return segments
-}
-
-const parsePathSegment = (segment: string): PathSegment => {
-    if (segment.startsWith('[') && segment.endsWith(']')) {
-        const inner = segment.slice(1, -1)
-        if (/^\d+$/.test(inner)) {
-            return { type: 'index', index: Number(inner) }
-        }
-        return { type: 'key', key: inner }
-    }
-    return { type: 'key', key: segment }
-}
-
-const getByPath = (input: unknown, path: string): unknown => {
-    if (!input || typeof input !== 'object') {
+const getMetricValue = (payload: unknown, key: string): unknown => {
+    if (!payload || typeof payload !== 'object') {
         return undefined
     }
-    const segments = splitPath(path).map(parsePathSegment)
-    let current: unknown = input
-    for (const segment of segments) {
-        if (segment.type === 'index') {
-            if (!Array.isArray(current)) {
-                return undefined
+    const root = payload as Record<string, unknown>
+    const data = root.data
+    if (data && typeof data === 'object' && !Array.isArray(data)) {
+        const entry = (data as Record<string, unknown>)[key]
+        if (entry !== undefined && entry !== null) {
+            if (entry && typeof entry === 'object' && 'value' in entry) {
+                return (entry as Record<string, unknown>).value
             }
-            current = current[segment.index]
-            continue
+            return entry
         }
-        if (!current || typeof current !== 'object') {
-            return undefined
-        }
-        current = (current as Record<string, unknown>)[segment.key]
     }
-    return current
+    if (key in root) {
+        return root[key]
+    }
+    return undefined
 }
 
 const toNumber = (value: unknown): number | undefined => {
@@ -81,6 +28,20 @@ const toNumber = (value: unknown): number | undefined => {
     if (typeof value === 'string') {
         const parsed = Number(value)
         return Number.isFinite(parsed) ? parsed : undefined
+    }
+    return undefined
+}
+
+const toUnixSeconds = (value: unknown): number | undefined => {
+    const numeric = toNumber(value)
+    if (numeric !== undefined) {
+        return numeric
+    }
+    if (typeof value === 'string') {
+        const parsed = Date.parse(value)
+        if (Number.isFinite(parsed)) {
+            return Math.floor(parsed / 1000)
+        }
     }
     return undefined
 }
@@ -104,12 +65,12 @@ const toBoolean = (value: unknown): boolean | undefined => {
     return undefined
 }
 
-const pickFirstValue = (payload: unknown, paths: string[] | undefined): unknown => {
-    if (!paths || paths.length === 0) {
+const pickFirstValue = (payload: unknown, keys: string[] | undefined): unknown => {
+    if (!keys || keys.length === 0) {
         return undefined
     }
-    for (const path of paths) {
-        const value = getByPath(payload, path)
+    for (const key of keys) {
+        const value = getMetricValue(payload, key)
         if (value !== undefined && value !== null) {
             return value
         }
@@ -121,7 +82,7 @@ export const extractTelemetry = (payload: unknown, mapping: TelemetryMapping): T
     const nowUtc = Math.floor(Date.now() / 1000)
 
     const rawUtc = pickFirstValue(payload, mapping.utc)
-    const utc = toNumber(rawUtc) ?? nowUtc
+    const utc = toUnixSeconds(rawUtc) ?? nowUtc
 
     const telemetry: Telemetry = { utc }
 

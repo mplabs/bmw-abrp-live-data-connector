@@ -82,7 +82,7 @@ The MQTT password is the **BMW ID token** from `bmw.tokens.json` (created by the
 - `passwordToken`: Choose which BMW token to use as password when `mqtt.password` is not set (`id` | `access` | `refresh`, default: `id`)
 
 ### `mapping`
-Map ABRP telemetry fields to JSON paths in the BMW payload. Each field can have multiple fallback paths.
+Map ABRP telemetry fields to BMW **data keys** (the keys inside the `data` map from the stream). Each field can have multiple fallback keys.
 
 Example:
 
@@ -94,13 +94,7 @@ mapping:
     - "vehicle.drivetrain.electricEngine.charging.status"
 ```
 
-If the BMW payload uses flat keys with dots (for example `data["vehicle.powertrain.electric.battery.stateOfCharge.target"]`), wrap the key in brackets:
-
-```yaml
-mapping:
-  soc:
-    - "data[vehicle.powertrain.electric.battery.stateOfCharge.target].value"
-```
+The connector reads `payload.data[KEY].value` for each key. If a key isn’t in `data`, it will fall back to a top-level field with the same name (rare in BMW payloads).
 
 Supported telemetry fields include:
 - `soc`
