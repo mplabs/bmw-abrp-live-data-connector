@@ -1,0 +1,10 @@
+services:
+  abrp-live-connector:
+    build: .
+    container_name: abrp-live-connector
+    environment:
+      CONFIG_PATH: /app/config.yaml
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+      - ./bmw.tokens.json:/app/bmw.tokens.json:ro
+    restart: unless-stopped

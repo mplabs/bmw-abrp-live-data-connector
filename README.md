@@ -41,6 +41,25 @@ References:
 - https://bmw-cardata.bmwgroup.com/customer/public/api-specification
 - https://documenter.getpostman.com/view/7396339/SWTK5a8w
 
+## Docker (VPS deployment)
+Build and run locally:
+
+```bash
+docker build -t abrp-live-connector .
+docker run --rm \\
+  -v $(pwd)/config.yaml:/app/config.yaml:ro \\
+  -v $(pwd)/bmw.tokens.json:/app/bmw.tokens.json:ro \\
+  -e CONFIG_PATH=/app/config.yaml \\
+  abrp-live-connector
+```
+
+Or with docker-compose:
+
+```bash
+cp docker-compose.example.yml docker-compose.yml
+docker compose up -d
+```
+
 ## Quick start
 1) Install dependencies
 
