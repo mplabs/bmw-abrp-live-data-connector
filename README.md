@@ -48,7 +48,7 @@ docker run --rm -it \\
   abrp-live-connector bun run src/cli/device-code.ts
 ```
 
-Hint: The default scope is `openid cardata:api:read cardata:streaming:read`. Set `BMW_SCOPE` only if you need to override it.
+Hint: This only works if your client is enabled for **CarData Streaming** in the myBMW portal. If streaming isn’t enabled, the device‑code flow will fail.
 
 7) Copy `config.example.yaml` to `config.yaml` and fill in:
    - `bmw.clientId`, `bmw.username`, `bmw.topic`, `mqtt.host`, `mqtt.port`
