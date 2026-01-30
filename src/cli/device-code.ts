@@ -43,6 +43,21 @@ const requestDeviceCode = async (endpoint: string, clientId: string, scope: stri
     })
 
     if (!response.ok) {
+        let errorBody: unknown = undefined
+        try {
+            errorBody = await response.json()
+        } catch {
+            try {
+                errorBody = await response.text()
+            } catch {
+                errorBody = undefined
+            }
+        }
+        logger.error('Device code request rejected', {
+            status: response.status,
+            scope,
+            error: errorBody,
+        })
         throw new Error(`Device code request failed (${response.status})`)
     }
 
