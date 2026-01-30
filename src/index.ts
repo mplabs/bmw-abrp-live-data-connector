@@ -65,13 +65,20 @@ const main = async () => {
         }
     })
 
-    const shutdown = () => {
-        logger.info('Shutting down')
-        client.end(true)
+    let shuttingDown = false
+    const shutdown = (signal: NodeJS.Signals) => {
+        if (shuttingDown) {
+            return
+        }
+        shuttingDown = true
+        logger.info('Shutting down', { signal })
+        client.end(true, () => {
+            process.exit(0)
+        })
     }
 
-    process.on('SIGINT', shutdown)
-    process.on('SIGTERM', shutdown)
+    process.once('SIGINT', () => shutdown('SIGINT'))
+    process.once('SIGTERM', () => shutdown('SIGTERM'))
 }
 
 main().catch((error) => {
