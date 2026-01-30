@@ -27,17 +27,18 @@ Optional (for local development):
    - `vehicle.vehicle.avgSpeed`
    - `vehicle.powertrain.electric.battery.charging.power`
    - `vehicle.drivetrain.electricEngine.charging.timeRemaining`
-3) Copy the stream credentials exactly as shown in the portal:
+3) Copy the **Client ID** from the portal and run the **device‑code flow** (user code authorization) to generate tokens.
+4) Copy the stream credentials exactly as shown in the portal:
    - **Host** + **Port** → `mqtt.host` and `mqtt.port`
    - **Benutzername** → `bmw.username`
    - **Topic** → `bmw.topic`
-4) Build the Docker image (needed for the device-code flow):
+5) Build the Docker image (needed for the device-code flow):
 
 ```bash
 docker build -t abrp-live-connector .
 ```
 
-5) Run the device-code flow to generate tokens
+6) Run the device-code flow to generate tokens
 
 ```bash
 BMW_SCOPE="openid cardata:api:read cardata:streaming:read" \\
@@ -48,11 +49,11 @@ docker run --rm -it \\
   abrp-live-connector bun run src/cli/device-code.ts
 ```
 
-6) Copy `config.example.yaml` to `config.yaml` and fill in:
+7) Copy `config.example.yaml` to `config.yaml` and fill in:
    - `bmw.clientId`, `bmw.username`, `bmw.topic`, `mqtt.host`, `mqtt.port`
    - `abrp.apiKey`, `abrp.userToken`
    - `bmw.tokensFile` should point to the `bmw.tokens.json` created by the device-code flow
-7) Start the connector with Docker:
+8) Start the connector with Docker:
 
 ```bash
 cp docker-compose.example.yml docker-compose.yml
