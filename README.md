@@ -48,7 +48,7 @@ docker run --rm -it \\
   abrp-live-connector bun run src/cli/device-code.ts
 ```
 
-Hint: The device-code flow can succeed without streaming enabled, but the connector will not receive MQTT data unless **CarData Streaming** is enabled for your client in the myBMW portal.
+Hint: This connector only works if **CarData Streaming** is enabled for your client in the myBMW portal.
 
 7) Copy `config.example.yaml` to `config.yaml` and fill in:
    - `bmw.clientId`, `bmw.username`, `bmw.topic`, `mqtt.host`, `mqtt.port`
