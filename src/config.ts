@@ -1,26 +1,62 @@
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import YAML from 'yaml'
+import { z } from 'zod'
 import { BMW_DEVICE_CODE_ENDPOINT, BMW_TOKEN_ENDPOINT } from './bmw/endpoints'
 import type { AppConfig } from './types'
 
-const assertString = (value: unknown, name: string): string => {
-    if (typeof value !== 'string' || value.trim().length === 0) {
-        throw new Error(`Missing or invalid config field: ${name}`)
+const parseWithSchema = <T>(schema: z.ZodSchema<T>, data: unknown, name: string): T => {
+    const result = schema.safeParse(data)
+    if (!result.success) {
+        const details = result.error.issues
+            .map((issue) => `${issue.path.join('.') || 'root'}: ${issue.message}`)
+            .join('; ')
+        throw new Error(`${name} validation failed: ${details}`)
     }
-    return value
+    return result.data
 }
 
-const assertObject = (value: unknown, name: string): Record<string, unknown> => {
-    if (!value || typeof value !== 'object' || Array.isArray(value)) {
-        throw new Error(`Missing or invalid config object: ${name}`)
-    }
-    return value as Record<string, unknown>
-}
+const LogLevelSchema = z.enum(['debug', 'info', 'warn', 'error'])
 
-const isLogLevel = (value: unknown): value is 'debug' | 'info' | 'warn' | 'error' => {
-    return value === 'debug' || value === 'info' || value === 'warn' || value === 'error'
-}
+const TokensSchema = z
+    .object({
+        access: z.string().min(1),
+        refresh: z.string().min(1),
+        id: z.string().min(1),
+    })
+    .passthrough()
+
+const ConfigSchema = z
+    .object({
+        bmw: z
+            .object({
+                clientId: z.string().min(1),
+                gcid: z.string().min(1),
+                vin: z.string().min(1),
+                tokensFile: z.string().min(1),
+                deviceCodeEndpoint: z.string().url().optional(),
+                tokenEndpoint: z.string().url().optional(),
+            })
+            .strict(),
+        abrp: z
+            .object({
+                apiKey: z.string().min(1),
+                userToken: z.string().min(1),
+            })
+            .strict(),
+        mqtt: z
+            .object({
+                brokerUrl: z.string().min(1),
+                tls: z.boolean().optional(),
+                clientId: z.string().optional(),
+                keepaliveSeconds: z.number().int().optional(),
+            })
+            .strict(),
+        mapping: z.record(z.array(z.string())),
+        rateLimitSeconds: z.number().int().optional(),
+        logLevel: LogLevelSchema.optional(),
+    })
+    .strict()
 
 const normalizeConfig = (config: AppConfig): AppConfig => {
     return {
@@ -52,48 +88,37 @@ export const loadConfig = async (configPath?: string): Promise<AppConfig> => {
 
     const parsed = ext === '.yaml' || ext === '.yml' ? YAML.parse(raw) : JSON.parse(raw)
 
-    const root = assertObject(parsed, 'root')
-    const bmw = assertObject(root.bmw, 'bmw')
-    const tokensFile = assertString(bmw.tokensFile, 'bmw.tokensFile')
-    const tokensFromFile = await loadTokensFromFile(tokensFile, configDir)
-    const bmwTokens = assertObject(tokensFromFile, 'bmw.tokens')
-    const mqtt = assertObject(root.mqtt, 'mqtt')
-    const abrp = assertObject(root.abrp, 'abrp')
-    const mapping = assertObject(root.mapping, 'mapping')
+    const root = parseWithSchema(ConfigSchema, parsed, 'config')
+    const tokensFromFile = await loadTokensFromFile(root.bmw.tokensFile, configDir)
+    const bmwTokens = parseWithSchema(TokensSchema, tokensFromFile, 'bmw.tokens')
 
     const config: AppConfig = {
         bmw: {
-            clientId: typeof bmw.clientId === 'string' ? bmw.clientId : undefined,
-            gcid: assertString(bmw.gcid, 'bmw.gcid'),
-            vin: assertString(bmw.vin, 'bmw.vin'),
-            tokensFile,
-            deviceCodeEndpoint:
-                typeof bmw.deviceCodeEndpoint === 'string'
-                    ? bmw.deviceCodeEndpoint
-                    : BMW_DEVICE_CODE_ENDPOINT,
-            tokenEndpoint:
-                typeof bmw.tokenEndpoint === 'string' ? bmw.tokenEndpoint : BMW_TOKEN_ENDPOINT,
+            clientId: root.bmw.clientId,
+            gcid: root.bmw.gcid,
+            vin: root.bmw.vin,
+            tokensFile: root.bmw.tokensFile,
+            deviceCodeEndpoint: root.bmw.deviceCodeEndpoint ?? BMW_DEVICE_CODE_ENDPOINT,
+            tokenEndpoint: root.bmw.tokenEndpoint ?? BMW_TOKEN_ENDPOINT,
             tokens: {
-                access: assertString(bmwTokens.access, 'bmw.tokens.access'),
-                refresh: assertString(bmwTokens.refresh, 'bmw.tokens.refresh'),
-                id: assertString(bmwTokens.id, 'bmw.tokens.id'),
+                access: bmwTokens.access,
+                refresh: bmwTokens.refresh,
+                id: bmwTokens.id,
             },
         },
         abrp: {
-            apiKey: assertString(abrp.apiKey, 'abrp.apiKey'),
-            userToken: assertString(abrp.userToken, 'abrp.userToken'),
+            apiKey: root.abrp.apiKey,
+            userToken: root.abrp.userToken,
         },
         mqtt: {
-            brokerUrl: assertString(mqtt.brokerUrl, 'mqtt.brokerUrl'),
-            tls: typeof mqtt.tls === 'boolean' ? mqtt.tls : undefined,
-            clientId: typeof mqtt.clientId === 'string' ? mqtt.clientId : undefined,
-            keepaliveSeconds:
-                typeof mqtt.keepaliveSeconds === 'number' ? mqtt.keepaliveSeconds : undefined,
+            brokerUrl: root.mqtt.brokerUrl,
+            tls: root.mqtt.tls,
+            clientId: root.mqtt.clientId,
+            keepaliveSeconds: root.mqtt.keepaliveSeconds,
         },
-        mapping: mapping as Record<string, string[]>,
-        rateLimitSeconds:
-            typeof root.rateLimitSeconds === 'number' ? root.rateLimitSeconds : undefined,
-        logLevel: isLogLevel(root.logLevel) ? root.logLevel : undefined,
+        mapping: root.mapping,
+        rateLimitSeconds: root.rateLimitSeconds,
+        logLevel: root.logLevel,
     }
 
     return normalizeConfig(config)

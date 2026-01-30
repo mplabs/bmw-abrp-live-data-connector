@@ -29,6 +29,7 @@ describe('loadConfig', () => {
         await writeYaml(
             configPath,
             `bmw:
+  clientId: "client-id"
   gcid: "gcid"
   vin: "vin"
   tokensFile: "bmw.tokens.json"
@@ -59,6 +60,7 @@ mapping:
         await writeYaml(
             configPath,
             `bmw:
+  clientId: "client-id"
   gcid: "gcid"
   vin: "vin"
 abrp:
