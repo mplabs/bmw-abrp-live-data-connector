@@ -21,18 +21,24 @@ mqtt:
   # passwordToken: "id"
 mapping:
   soc:
-    - "vehicle.powertrain.electric.battery.stateOfCharge.target"
+    - "vehicle.drivetrain.batteryManagement.header"
   is_charging:
     - "vehicle.drivetrain.electricEngine.charging.status"
   is_plugged_in:
-    - "vehicle.drivetrain.electricEngine.charging.plugConnectionState"
+    - "vehicle.body.chargingPort.status"
+    - "vehicle.powertrain.tractionBattery.charging.port.anyPosition.isPlugged"
   lat:
-    - "location.latitude"
+    - "vehicle.cabin.infotainment.navigation.currentLocation.latitude"
   lon:
-    - "location.longitude"
+    - "vehicle.cabin.infotainment.navigation.currentLocation.longitude"
   speed:
-    - "vehicle.speed"
+    - "vehicle.vehicle.avgSpeed"
   power:
-    - "vehicle.powertrain.electric.power"
+    - "vehicle.powertrain.electric.battery.charging.power"
+  charging_power:
+    - "vehicle.powertrain.electric.battery.charging.power"
+  remaining_charge_time:
+    - "vehicle.drivetrain.electricEngine.charging.timeRemaining"
+    - "vehicle.drivetrain.electricEngine.charging.timeToFullyCharged"
 rateLimitSeconds: 10
 logLevel: "info"

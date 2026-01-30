@@ -89,7 +89,7 @@ Example:
 ```yaml
 mapping:
   soc:
-    - "vehicle.powertrain.electric.battery.stateOfCharge.target"
+    - "vehicle.drivetrain.batteryManagement.header"
   is_charging:
     - "vehicle.drivetrain.electricEngine.charging.status"
 ```
