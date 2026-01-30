@@ -63,6 +63,18 @@ const main = async () => {
             })
             return
         }
+        logger.debug('Telemetry extracted', {
+            soc: telemetry.soc,
+            is_charging: telemetry.is_charging,
+            is_plugged_in: telemetry.is_plugged_in,
+            lat: telemetry.lat,
+            lon: telemetry.lon,
+            speed: telemetry.speed,
+            power: telemetry.power,
+            charging_power: telemetry.charging_power,
+            remaining_charge_time: telemetry.remaining_charge_time,
+            utc: telemetry.utc,
+        })
 
         const nowSeconds = Math.floor(Date.now() / 1000)
         if (!rateLimiter.shouldSend(nowSeconds)) {
