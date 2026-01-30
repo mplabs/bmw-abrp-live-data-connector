@@ -32,7 +32,13 @@ Optional (for local development):
    - **Host** + **Port** → `mqtt.host` and `mqtt.port`
    - **Benutzername** → `bmw.username`
    - **Topic** → `bmw.topic`
-5) Create a real config file (an empty file will fail). Start from the example and fill in:
+5) Build the Docker image (needed for the device-code flow):
+
+```bash
+docker build -t mplabs/bmw-abrp-live-connector .
+```
+
+6) Create a real config file (an empty file will fail). Start from the example and fill in:
    - `bmw.clientId`, `bmw.username`, `bmw.topic`
    - `mqtt.host`, `mqtt.port`
    - (You can fill ABRP later, but the file must be valid YAML.)
@@ -41,16 +47,10 @@ Optional (for local development):
 cp config.example.yaml config.yaml
 ```
 
-6) Create the tokens file placeholder (Docker needs the file to exist):
+7) Create the tokens file placeholder (Docker needs the file to exist):
 
 ```bash
 touch bmw.tokens.json
-```
-
-7) Build the Docker image (needed for the device-code flow):
-
-```bash
-docker build -t mplabs/bmw-abrp-live-connector .
 ```
 
 8) Run the device-code flow to generate tokens
