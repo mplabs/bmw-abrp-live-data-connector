@@ -52,6 +52,7 @@ docker compose up -d
 ```
 
 References:
+- https://www.bmw.de/de-de/mybmw/mapped-vehicle/public/car-data-info/
 - https://www.bmw.de/de-de/mybmw/mapped-vehicle/2dc02b782b65cfde3c5baddabd398aaaf6cfd5d835baf2f76a431bac10218c784ef358177d6ad327dac0e6fabd697705bc/cardata
 - https://bmw-cardata.bmwgroup.com/customer/public/api-documentation/Id-Streaming
 - https://bmw-cardata.bmwgroup.com/customer/public/api-specification
