@@ -1,0 +1,19 @@
+{
+  "name": "abrp-live-data-connector",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "dev": "bun --watch src/index.ts",
+    "device-code": "bun run src/cli/device-code.ts"
+  },
+  "dependencies": {
+    "mqtt": "^5.5.0",
+    "yaml": "^2.4.5"
+  },
+  "devDependencies": {
+    "bun-types": "^1.1.34",
+    "@types/node": "^20.11.30"
+  }
+}

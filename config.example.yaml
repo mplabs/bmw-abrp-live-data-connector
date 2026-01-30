@@ -1,0 +1,33 @@
+bmw:
+  clientId: "<BMW_CLIENT_ID>"
+  gcid: "<BMW_GCID>"
+  vin: "<VEHICLE_VIN>"
+  tokensFile: "bmw.tokens.json"
+  deviceCodeEndpoint: "https://customer.bmwgroup.com/gcdm/oauth/device/code"
+  tokenEndpoint: "https://customer.bmwgroup.com/gcdm/oauth/token"
+  tokens:
+    access: "<BMW_ACCESS_TOKEN>"
+    refresh: "<BMW_REFRESH_TOKEN>"
+    id: "<BMW_ID_TOKEN>"
+abrp:
+  apiKey: "<ABRP_API_KEY>"
+  userToken: "<ABRP_USER_TOKEN>"
+mqtt:
+  brokerUrl: "<BROKER_URL>"
+  tls: true
+mapping:
+  soc:
+    - "vehicle.powertrain.electric.battery.stateOfCharge.target"
+  is_charging:
+    - "vehicle.drivetrain.electricEngine.charging.status"
+  is_plugged_in:
+    - "vehicle.drivetrain.electricEngine.charging.plugConnectionState"
+  lat:
+    - "location.latitude"
+  lon:
+    - "location.longitude"
+  speed:
+    - "vehicle.speed"
+  power:
+    - "vehicle.powertrain.electric.power"
+rateLimitSeconds: 10
