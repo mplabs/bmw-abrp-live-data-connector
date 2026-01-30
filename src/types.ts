@@ -50,4 +50,5 @@ export type AppConfig = {
     mqtt: MqttConfig
     mapping: TelemetryMapping
     rateLimitSeconds?: number
+    logLevel?: 'debug' | 'info' | 'warn' | 'error'
 }

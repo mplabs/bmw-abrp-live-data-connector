@@ -22,6 +22,10 @@ const isPasswordToken = (value: unknown): value is 'id' | 'access' | 'refresh' =
     return value === 'id' || value === 'access' || value === 'refresh'
 }
 
+const isLogLevel = (value: unknown): value is 'debug' | 'info' | 'warn' | 'error' => {
+    return value === 'debug' || value === 'info' || value === 'warn' || value === 'error'
+}
+
 const normalizeConfig = (config: AppConfig): AppConfig => {
     return {
         ...config,
@@ -31,6 +35,7 @@ const normalizeConfig = (config: AppConfig): AppConfig => {
             keepaliveSeconds: config.mqtt.keepaliveSeconds ?? 60,
         },
         rateLimitSeconds: config.rateLimitSeconds ?? 10,
+        logLevel: config.logLevel ?? 'info',
     }
 }
 
@@ -99,6 +104,7 @@ export const loadConfig = async (configPath?: string): Promise<AppConfig> => {
         mapping: mapping as Record<string, string[]>,
         rateLimitSeconds:
             typeof root.rateLimitSeconds === 'number' ? root.rateLimitSeconds : undefined,
+        logLevel: isLogLevel(root.logLevel) ? root.logLevel : undefined,
     }
 
     return normalizeConfig(config)

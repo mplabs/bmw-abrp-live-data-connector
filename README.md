@@ -109,6 +109,9 @@ Supported telemetry fields include:
 ### `rateLimitSeconds`
 Minimum seconds between ABRP telemetry pushes (default: 10).
 
+### `logLevel`
+Controls log verbosity (`debug`, `info`, `warn`, `error`). Default is `info`.
+
 ## Device code flow notes
 The device-code helper reads `config.yaml` and uses `bmw.clientId`. You can override the OAuth scope via `BMW_SCOPE` (default: `openid cardata cardata.streaming`).
 

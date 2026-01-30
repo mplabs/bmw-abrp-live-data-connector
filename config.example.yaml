@@ -35,3 +35,4 @@ mapping:
   power:
     - "vehicle.powertrain.electric.power"
 rateLimitSeconds: 10
+logLevel: "info"

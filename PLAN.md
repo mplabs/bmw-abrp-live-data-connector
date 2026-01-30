@@ -67,6 +67,12 @@ MVP: Stream BMW CarData MQTT telemetry, normalize to ABRP fields, and push to AB
 - **Estimate:** 0.25h
 - **Notes:** Added a helper script to inspect ID token expiry and scopes.
 
+### Logging controls
+- **Status:** Done
+- **Owner:** Agent
+- **Estimate:** 0.5h
+- **Notes:** Added logLevel config and MQTT message cadence debug output.
+
 ### Project setup & skeleton
 - **Status:** Done
 - **Owner:** Agent

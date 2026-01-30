@@ -1,5 +1,5 @@
 import { loadConfig } from './config'
-import { logger } from './logger'
+import { logger, setLogLevel } from './logger'
 import { connectBmwMqtt } from './bmw/mqtt'
 import { AbrpClient } from './abrp/client'
 import { extractTelemetry } from './mapping'
@@ -7,16 +7,31 @@ import { RateLimiter } from './rate-limit'
 
 const main = async () => {
     const config = await loadConfig()
+    setLogLevel(config.logLevel ?? 'info')
 
     logger.info('Config loaded', {
         rateLimitSeconds: config.rateLimitSeconds,
         mqtt: { brokerUrl: config.mqtt.brokerUrl },
+        logLevel: config.logLevel ?? 'info',
     })
 
     const abrp = new AbrpClient(config.abrp)
     const rateLimiter = new RateLimiter(config.rateLimitSeconds ?? 10)
 
+    let messageCount = 0
+    let lastMessageAt: number | null = null
     const client = connectBmwMqtt(config.bmw, config.mqtt, async (_topic, payload) => {
+        messageCount += 1
+        const nowMs = Date.now()
+        if (lastMessageAt === null || nowMs - lastMessageAt >= 1000) {
+            const intervalMs = lastMessageAt ? nowMs - lastMessageAt : null
+            logger.debug('MQTT message received', {
+                count: messageCount,
+                bytes: payload.length,
+                intervalMs,
+            })
+            lastMessageAt = nowMs
+        }
         let parsed: unknown
         try {
             parsed = JSON.parse(payload.toString('utf8'))

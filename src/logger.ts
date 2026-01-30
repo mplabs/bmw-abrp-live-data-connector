@@ -33,7 +33,26 @@ const redactValue = (value: unknown): unknown => {
     return value
 }
 
+const shouldLog = (level: LogLevel, minLevel: LogLevel): boolean => {
+    const order: Record<LogLevel, number> = {
+        debug: 10,
+        info: 20,
+        warn: 30,
+        error: 40,
+    }
+    return order[level] >= order[minLevel]
+}
+
+let logLevel: LogLevel = 'info'
+
+export const setLogLevel = (level: LogLevel): void => {
+    logLevel = level
+}
+
 export const log = (level: LogLevel, message: string, payload: LogPayload = {}): void => {
+    if (!shouldLog(level, logLevel)) {
+        return
+    }
     const entry = {
         ts: new Date().toISOString(),
         level,
