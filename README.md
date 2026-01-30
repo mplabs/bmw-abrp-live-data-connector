@@ -41,13 +41,14 @@ docker build -t abrp-live-connector .
 6) Run the device-code flow to generate tokens
 
 ```bash
-BMW_SCOPE="openid cardata:api:read cardata:streaming:read" \\
 docker run --rm -it \\
   -v $(pwd)/config.yaml:/app/config.yaml:ro \\
   -v $(pwd)/bmw.tokens.json:/app/bmw.tokens.json \\
   -e CONFIG_PATH=/app/config.yaml \\
   abrp-live-connector bun run src/cli/device-code.ts
 ```
+
+Hint: The default scope is `openid cardata:api:read cardata:streaming:read`. Set `BMW_SCOPE` only if you need to override it.
 
 7) Copy `config.example.yaml` to `config.yaml` and fill in:
    - `bmw.clientId`, `bmw.username`, `bmw.topic`, `mqtt.host`, `mqtt.port`

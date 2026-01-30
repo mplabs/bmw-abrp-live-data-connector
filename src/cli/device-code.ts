@@ -143,7 +143,8 @@ const main = async () => {
         throw new Error('Missing bmw.clientId, bmw.deviceCodeEndpoint, or bmw.tokenEndpoint')
     }
 
-    const scope = process.env.BMW_SCOPE || 'openid cardata cardata.streaming'
+    const scope =
+        process.env.BMW_SCOPE || 'openid cardata:api:read cardata:streaming:read'
 
     const deviceCode = await requestDeviceCode(
         assertUrl(deviceCodeEndpoint, 'bmw.deviceCodeEndpoint'),
