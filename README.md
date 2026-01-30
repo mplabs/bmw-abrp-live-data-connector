@@ -10,7 +10,7 @@ A Bun-based service that listens to BMW CarData Streaming (MQTT), normalizes the
 
 ## Requirements
 - Docker + Docker Compose
-- BMW CarData Streaming setup (clientId, GCID, VIN, broker host/port)
+- BMW CarData Streaming setup (clientId + stream credentials from the myBMW portal: broker host/port, topic/VIN, username/GCID)
 - ABRP API key + user token
 
 Optional (for local development):
