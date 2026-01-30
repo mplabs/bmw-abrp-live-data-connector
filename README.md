@@ -9,9 +9,12 @@ A Bun-based service that listens to BMW CarData Streaming (MQTT), normalizes the
 - Includes BMW OAuth device-code helper
 
 ## Requirements
-- Bun (runtime)
+- Docker + Docker Compose
 - BMW CarData Streaming credentials (clientId, GCID, VIN, tokens)
 - ABRP API key + user token
+
+Optional (for local development):
+- Bun (runtime)
 
 ## Setup (myBMW CarData Streaming)
 1) Create a BMW CarData client and subscribe it to **CarData Streaming** in the myBMW portal.
@@ -20,19 +23,31 @@ A Bun-based service that listens to BMW CarData Streaming (MQTT), normalizes the
    - **Host + Port** → `mqtt.brokerUrl`
    - **Benutzername** → `bmw.gcid`
    - **Topic (VIN)** → `bmw.vin`
-4) Run the device-code flow to generate tokens:
+4) Build the Docker image (needed for the device-code flow):
 
 ```bash
-BMW_SCOPE="openid cardata:api:read cardata:streaming:read" bun run device-code
+docker build -t abrp-live-connector .
 ```
 
-5) Copy `config.example.yaml` to `config.yaml` and fill in:
-   - `bmw.clientId`, `bmw.gcid`, `bmw.vin`, `mqtt.brokerUrl`
-   - `abrp.apiKey`, `abrp.userToken`
-6) Start the connector:
+5) Run the device-code flow to generate tokens:
 
 ```bash
-bun start
+BMW_SCOPE="openid cardata:api:read cardata:streaming:read" \\
+docker run --rm -it \\
+  -v $(pwd)/config.yaml:/app/config.yaml:ro \\
+  -v $(pwd)/bmw.tokens.json:/app/bmw.tokens.json \\
+  -e CONFIG_PATH=/app/config.yaml \\
+  abrp-live-connector bun run src/cli/device-code.ts
+```
+
+6) Copy `config.example.yaml` to `config.yaml` and fill in:
+   - `bmw.clientId`, `bmw.gcid`, `bmw.vin`, `mqtt.brokerUrl`
+   - `abrp.apiKey`, `abrp.userToken`
+7) Start the connector with Docker:
+
+```bash
+cp docker-compose.example.yml docker-compose.yml
+docker compose up -d
 ```
 
 References:
@@ -42,7 +57,14 @@ References:
 - https://documenter.getpostman.com/view/7396339/SWTK5a8w
 
 ## Docker (VPS deployment)
-Build and run locally:
+Run with docker-compose (recommended):
+
+```bash
+cp docker-compose.example.yml docker-compose.yml
+docker compose up -d
+```
+
+Run directly with docker:
 
 ```bash
 docker build -t abrp-live-connector .
@@ -53,43 +75,16 @@ docker run --rm \\
   abrp-live-connector
 ```
 
-Or with docker-compose:
-
-```bash
-cp docker-compose.example.yml docker-compose.yml
-docker compose up -d
-```
-
-## Quick start
-1) Install dependencies
+## Local development (optional)
+If you want to run without Docker:
 
 ```bash
 bun install
-```
-
-2) Create a config
-
-```bash
-cp config.example.yaml config.yaml
-```
-
-3) Fill in `config.yaml` with your BMW + ABRP details
-
-4) (Optional) Run the BMW device-code flow to get tokens
-
-```bash
 bun run device-code
+bun start
 ```
 
-This writes `bmw.tokens.json` in the repo root. Point `bmw.tokensFile` to it.
-
-5) Start the connector
-
-```bash
-bun run start
-```
-
-For live reload during development:
+For live reload:
 
 ```bash
 bun run dev
@@ -164,6 +159,8 @@ BMW streaming messages are event-based and typically carry a single key update. 
 The device-code helper reads `config.yaml` and uses `bmw.clientId`. You can override the OAuth scope via `BMW_SCOPE` (default: `openid cardata cardata.streaming`).
 
 If the device-code response does not include a verification URL, open https://customer.bmwgroup.com/oneid/link and enter the displayed user code.
+
+To run the device-code flow in Docker, use the command from the setup section above.
 
 ### Token refresh
 The connector refreshes BMW tokens automatically using the refresh token in `bmw.tokens.json`. It updates the tokens file and reconnects MQTT when a new ID token is issued, so you don’t need to re-run the device-code flow during normal operation.
