@@ -9,7 +9,7 @@ abrp:
   apiKey: "<ABRP_API_KEY>"
   userToken: "<ABRP_USER_TOKEN>"
 mqtt:
-  brokerUrl: "<BROKER_URL>"
+  brokerUrl: "mqtts://<BMW_MQTT_BROKER>:8883"
   tls: true
 mapping:
   soc:

@@ -47,7 +47,7 @@ MVP: Stream BMW CarData MQTT telemetry, normalize to ABRP fields, and push to AB
 - **Status:** Done
 - **Owner:** Agent
 - **Estimate:** 0.25h
-- **Notes:** Removed inline token placeholders and documented tokensFile as preferred.
+- **Notes:** Removed inline token placeholders and documented tokensFile as preferred; set BMW broker placeholder in example.
 
 ### Project setup & skeleton
 - **Status:** Done

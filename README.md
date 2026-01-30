@@ -64,7 +64,7 @@ The app loads `config.yaml` by default. Override with `CONFIG_PATH=/path/to/conf
 - `userToken`: ABRP user token (used as `token` query param)
 
 ### `mqtt`
-- `brokerUrl`: MQTT broker URL
+- `brokerUrl`: BMW MQTT broker URL (from BMW CarData Streaming portal; typically `mqtts://…:8883`)
 - `tls`: Enable TLS (default: true)
 - `clientId`: Optional custom client id
 - `keepaliveSeconds`: Keepalive interval (default: 60)
