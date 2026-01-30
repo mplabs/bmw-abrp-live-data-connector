@@ -13,6 +13,34 @@ A Bun-based service that listens to BMW CarData Streaming (MQTT), normalizes the
 - BMW CarData Streaming credentials (clientId, GCID, VIN, tokens)
 - ABRP API key + user token
 
+## Setup (myBMW CarData Streaming)
+1) Create a BMW CarData client and subscribe it to **CarData Streaming** in the myBMW portal.
+2) Configure a stream and select the attributes you want to receive (make sure the SoC key you plan to map is included).
+3) Note the streaming credentials shown by the portal:
+   - **Host + Port** → `mqtt.brokerUrl`
+   - **Benutzername** → `bmw.gcid`
+   - **Topic (VIN)** → `bmw.vin`
+4) Run the device-code flow to generate tokens:
+
+```bash
+BMW_SCOPE="openid cardata:api:read cardata:streaming:read" bun run device-code
+```
+
+5) Copy `config.example.yaml` to `config.yaml` and fill in:
+   - `bmw.clientId`, `bmw.gcid`, `bmw.vin`, `mqtt.brokerUrl`
+   - `abrp.apiKey`, `abrp.userToken`
+6) Start the connector:
+
+```bash
+bun start
+```
+
+References:
+- https://www.bmw.de/de-de/mybmw/mapped-vehicle/2dc02b782b65cfde3c5baddabd398aaaf6cfd5d835baf2f76a431bac10218c784ef358177d6ad327dac0e6fabd697705bc/cardata
+- https://bmw-cardata.bmwgroup.com/customer/public/api-documentation/Id-Streaming
+- https://bmw-cardata.bmwgroup.com/customer/public/api-specification
+- https://documenter.getpostman.com/view/7396339/SWTK5a8w
+
 ## Quick start
 1) Install dependencies
 
