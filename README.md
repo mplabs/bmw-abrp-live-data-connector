@@ -35,7 +35,7 @@ Optional (for local development):
 5) Build the Docker image (needed for the device-code flow):
 
 ```bash
-docker build -t abrp-live-connector .
+docker build -t mplabs/bmw-abrp-live-connector .
 ```
 
 6) Run the device-code flow to generate tokens
@@ -45,7 +45,7 @@ docker run --rm -it \\
   -v $(pwd)/config.yaml:/app/config.yaml:ro \\
   -v $(pwd)/bmw.tokens.json:/app/bmw.tokens.json \\
   -e CONFIG_PATH=/app/config.yaml \\
-  abrp-live-connector bun run src/cli/device-code.ts
+  mplabs/bmw-abrp-live-connector bun run src/cli/device-code.ts
 ```
 
 Hint: This connector only works if **CarData Streaming** is enabled for your client in the myBMW portal.
@@ -78,12 +78,12 @@ docker compose up -d
 Run directly with docker:
 
 ```bash
-docker build -t abrp-live-connector .
+docker build -t mplabs/bmw-abrp-live-connector .
 docker run --rm \\
   -v $(pwd)/config.yaml:/app/config.yaml:ro \\
   -v $(pwd)/bmw.tokens.json:/app/bmw.tokens.json:ro \\
   -e CONFIG_PATH=/app/config.yaml \\
-  abrp-live-connector
+  mplabs/bmw-abrp-live-connector
 ```
 
 ## Local development (optional)
