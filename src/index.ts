@@ -20,6 +20,7 @@ const main = async () => {
 
     let messageCount = 0
     let lastMessageAt: number | null = null
+    let rawLogged = false
     const client = connectBmwMqtt(config.bmw, config.mqtt, async (_topic, payload) => {
         messageCount += 1
         const nowMs = Date.now()
@@ -33,8 +34,16 @@ const main = async () => {
             lastMessageAt = nowMs
         }
         let parsed: unknown
+        const rawText = payload.toString('utf8')
+        if (!rawLogged) {
+            const maxLen = 4000
+            const truncated =
+                rawText.length > maxLen ? `${rawText.slice(0, maxLen)}…(truncated)` : rawText
+            logger.debug('MQTT raw payload', { bytes: payload.length, payload: truncated })
+            rawLogged = true
+        }
         try {
-            parsed = JSON.parse(payload.toString('utf8'))
+            parsed = JSON.parse(rawText)
         } catch (error) {
             logger.warn('MQTT payload is not valid JSON', {
                 error: (error as Error).message,
