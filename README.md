@@ -51,6 +51,15 @@ bun run dev
 ## Configuration
 The app loads `config.yaml` by default. Override with `CONFIG_PATH=/path/to/config.yaml`.
 
+### Values from the BMW CarData Streaming portal
+Use the portal to fill in these fields:
+
+- **Host** + **Port** → `mqtt.brokerUrl` (e.g. `mqtts://customer.streaming-cardata.bmwgroup.com:9000`)
+- **Benutzername** → `bmw.gcid`
+- **Topic** (VIN) → `bmw.vin`
+
+The MQTT password is the **BMW ID token** from `bmw.tokens.json` (created by the device-code flow). The connector uses that automatically.
+
 ### `bmw`
 - `clientId`: BMW app client id (required for device code flow)
 - `gcid`: BMW GCID used as MQTT username
