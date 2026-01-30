@@ -35,7 +35,7 @@ MVP: Stream BMW CarData MQTT telemetry, normalize to ABRP fields, and push to AB
 - **Status:** Done
 - **Owner:** Agent
 - **Estimate:** 1h
-- **Notes:** Added Bun unit tests for telemetry mapping, config loading, and rate limiting.
+- **Notes:** Added Bun unit tests for telemetry mapping, config loading, rate limiting, ABRP client, and MQTT connect setup.
 
 ### Project setup & skeleton
 - **Status:** Done
