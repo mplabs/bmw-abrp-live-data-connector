@@ -51,8 +51,8 @@ bun run dev
 ## Configuration
 The app loads `config.yaml` by default. Override with `CONFIG_PATH=/path/to/config.yaml`.
 
-### Values from the BMW CarData Streaming portal
-Use the portal to fill in these fields:
+### Values from the myBMW CarData Streaming portal
+Use the myBMW portal to fill in these fields:
 
 - **Host** + **Port** → `mqtt.brokerUrl` (e.g. `mqtts://customer.streaming-cardata.bmwgroup.com:9000`)
 - **Benutzername** → `bmw.gcid`

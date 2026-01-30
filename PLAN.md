@@ -49,11 +49,11 @@ MVP: Stream BMW CarData MQTT telemetry, normalize to ABRP fields, and push to AB
 - **Estimate:** 0.25h
 - **Notes:** Removed inline token placeholders and documented tokensFile as preferred; set BMW broker placeholder in example.
 
-### BMW portal setup docs
+### myBMW portal setup docs
 - **Status:** Done
 - **Owner:** Agent
 - **Estimate:** 0.25h
-- **Notes:** Clarified mapping from CarData portal fields (Host/Port/Benutzername/Topic) to config values.
+- **Notes:** Clarified mapping from myBMW CarData portal fields (Host/Port/Benutzername/Topic) to config values.
 
 ### Project setup & skeleton
 - **Status:** Done
