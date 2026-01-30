@@ -43,6 +43,12 @@ MVP: Stream BMW CarData MQTT telemetry, normalize to ABRP fields, and push to AB
 - **Estimate:** 0.5h
 - **Notes:** Auto-populate GCID and tokensFile in config after device-code flow.
 
+### Config example cleanup
+- **Status:** Done
+- **Owner:** Agent
+- **Estimate:** 0.25h
+- **Notes:** Removed inline token placeholders and documented tokensFile as preferred.
+
 ### Project setup & skeleton
 - **Status:** Done
 - **Owner:** Agent

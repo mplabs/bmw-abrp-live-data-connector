@@ -5,10 +5,6 @@ bmw:
   tokensFile: "bmw.tokens.json"
   deviceCodeEndpoint: "https://customer.bmwgroup.com/gcdm/oauth/device/code"
   tokenEndpoint: "https://customer.bmwgroup.com/gcdm/oauth/token"
-  tokens:
-    access: "<BMW_ACCESS_TOKEN>"
-    refresh: "<BMW_REFRESH_TOKEN>"
-    id: "<BMW_ID_TOKEN>"
 abrp:
   apiKey: "<ABRP_API_KEY>"
   userToken: "<ABRP_USER_TOKEN>"

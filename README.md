@@ -34,7 +34,7 @@ cp config.example.yaml config.yaml
 bun run device-code
 ```
 
-This writes `bmw.tokens.json` in the repo root. Point `bmw.tokensFile` to it or paste the tokens directly into `config.yaml` under `bmw.tokens`.
+This writes `bmw.tokens.json` in the repo root. Point `bmw.tokensFile` to it.
 
 5) Start the connector
 
@@ -55,9 +55,9 @@ The app loads `config.yaml` by default. Override with `CONFIG_PATH=/path/to/conf
 - `clientId`: BMW app client id (required for device code flow)
 - `gcid`: BMW GCID used as MQTT username
 - `vin`: Vehicle VIN
-- `tokensFile`: Optional JSON file containing `access`, `refresh`, `id` tokens
+- `tokensFile`: JSON file containing `access`, `refresh`, `id` tokens (recommended)
 - `deviceCodeEndpoint` / `tokenEndpoint`: Override BMW OAuth endpoints if needed
-- `tokens`: Inline access/refresh/id tokens (used if `tokensFile` not set)
+- `tokens`: Inline access/refresh/id tokens (fallback; not recommended for long-term use)
 
 ### `abrp`
 - `apiKey`: ABRP API key
@@ -103,6 +103,7 @@ The device-code helper reads `config.yaml` and uses `bmw.clientId`. You can over
 ## Security
 - `config.yaml` and `bmw.tokens.json` are in `.gitignore` for a reason. Keep secrets out of git.
 - Prefer using `config.example.yaml` as a template and store real credentials locally.
+- Use `tokensFile` instead of inline tokens to avoid accidental secret exposure.
 
 ## Docs
 - Functional spec: `BMW-Telemetry-to-ABRP-Live-Connector-FSD.md`
