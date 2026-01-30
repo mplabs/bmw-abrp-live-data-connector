@@ -17,8 +17,8 @@ Optional (for local development):
 - Bun (runtime)
 
 ## Setup (myBMW CarData Streaming)
-1) Create a BMW CarData client and subscribe it to **CarData Streaming** in the myBMW portal.
-2) Configure a stream and select the attributes you want to receive (make sure the SoC key you plan to map is included).
+1) Create a BMW CarData client and subscribe it to **CarData Streaming** in the myBMW portal: https://www.bmw.de/de-de/mybmw/mapped-vehicle/public/car-data-info/
+2) Configure a stream and select the attributes you want to receive (make sure the SoC key you plan to map is included). The stream setup & credentials are described here: https://bmw-cardata.bmwgroup.com/customer/public/api-documentation/Id-Streaming
 3) Note the streaming credentials shown by the portal (use the labels exactly as displayed):
    - **Host + Port** → `mqtt.brokerUrl`
    - **Benutzername** → `bmw.gcid`
@@ -29,7 +29,7 @@ Optional (for local development):
 docker build -t abrp-live-connector .
 ```
 
-5) Run the device-code flow to generate tokens:
+5) Run the device-code flow to generate tokens (spec + examples): https://bmw-cardata.bmwgroup.com/customer/public/api-specification and https://documenter.getpostman.com/view/7396339/SWTK5a8w
 
 ```bash
 BMW_SCOPE="openid cardata:api:read cardata:streaming:read" \\
