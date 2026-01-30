@@ -10,7 +10,7 @@ A Bun-based service that listens to BMW CarData Streaming (MQTT), normalizes the
 
 ## Requirements
 - Docker + Docker Compose
-- BMW CarData Streaming setup (clientId + stream credentials from the myBMW portal: broker host/port, topic/VIN, username/GCID)
+- BMW CarData Streaming setup (clientId + stream credentials from the myBMW portal: Host, Port, Topic, Benutzername)
 - ABRP API key + user token
 
 Optional (for local development):
@@ -19,10 +19,10 @@ Optional (for local development):
 ## Setup (myBMW CarData Streaming)
 1) Create a BMW CarData client and subscribe it to **CarData Streaming** in the myBMW portal.
 2) Configure a stream and select the attributes you want to receive (make sure the SoC key you plan to map is included).
-3) Note the streaming credentials shown by the portal:
+3) Note the streaming credentials shown by the portal (use the labels exactly as displayed):
    - **Host + Port** → `mqtt.brokerUrl`
    - **Benutzername** → `bmw.gcid`
-   - **Topic (VIN)** → `bmw.vin`
+   - **Topic** → `bmw.vin`
 4) Build the Docker image (needed for the device-code flow):
 
 ```bash
@@ -99,14 +99,14 @@ Use the myBMW portal to fill in these fields:
 
 - **Host** + **Port** → `mqtt.brokerUrl` (e.g. `mqtts://customer.streaming-cardata.bmwgroup.com:9000`)
 - **Benutzername** → `bmw.gcid`
-- **Topic** (VIN) → `bmw.vin`
+- **Topic** → `bmw.vin`
 
 The MQTT password is the **BMW ID token** from `bmw.tokens.json` (created by the device-code flow). The connector uses that automatically.
 
 ### `bmw`
 - `clientId`: BMW app client id (required for device code flow)
-- `gcid`: BMW GCID used as MQTT username
-- `vin`: Vehicle VIN
+- `gcid`: **Benutzername** from the myBMW portal
+- `vin`: **Topic** from the myBMW portal
 - `tokensFile`: JSON file containing `access`, `refresh`, `id` tokens (required)
 - `deviceCodeEndpoint` / `tokenEndpoint`: Override BMW OAuth endpoints if needed
 
