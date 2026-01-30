@@ -103,6 +103,12 @@ MVP: Stream BMW CarData MQTT telemetry, normalize to ABRP fields, and push to AB
 - **Estimate:** 0.5h
 - **Notes:** Added Dockerfile, docker-compose example, and README instructions for VPS deployment.
 
+### Device-code authorization URL
+- **Status:** Done
+- **Owner:** Agent
+- **Estimate:** 0.25h
+- **Notes:** Added manual authorization URL fallback for device-code flow.
+
 ### Project setup & skeleton
 - **Status:** Done
 - **Owner:** Agent

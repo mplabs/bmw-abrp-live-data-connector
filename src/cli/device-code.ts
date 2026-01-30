@@ -152,9 +152,10 @@ const main = async () => {
     )
 
     const userCode = String(deviceCode.user_code ?? '')
-    const verifyUrl = String(
-        deviceCode.verification_uri_complete ?? deviceCode.verification_uri ?? '',
-    )
+    const manualVerifyUrl = 'https://customer.bmwgroup.com/oneid/link'
+    const verifyUrl =
+        String(deviceCode.verification_uri_complete ?? deviceCode.verification_uri ?? '') ||
+        manualVerifyUrl
     const deviceCodeValue = String(deviceCode.device_code ?? '')
     const pollInterval = Number(deviceCode.interval ?? 5)
     const expiresIn = Number(deviceCode.expires_in ?? 900)
@@ -165,6 +166,7 @@ const main = async () => {
 
     logger.info('Complete authorization in the browser', {
         verificationUrl: verifyUrl,
+        manualUrl: manualVerifyUrl,
         userCode,
     })
 

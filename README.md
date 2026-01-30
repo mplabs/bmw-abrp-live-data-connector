@@ -163,6 +163,8 @@ BMW streaming messages are event-based and typically carry a single key update. 
 ## Device code flow notes
 The device-code helper reads `config.yaml` and uses `bmw.clientId`. You can override the OAuth scope via `BMW_SCOPE` (default: `openid cardata cardata.streaming`).
 
+If the device-code response does not include a verification URL, open https://customer.bmwgroup.com/oneid/link and enter the displayed user code.
+
 ### Token refresh
 The connector refreshes BMW tokens automatically using the refresh token in `bmw.tokens.json`. It updates the tokens file and reconnects MQTT when a new ID token is issued, so you don’t need to re-run the device-code flow during normal operation.
 
