@@ -32,10 +32,10 @@ Optional (for local development):
    - **Host** + **Port** → `mqtt.host` and `mqtt.port`
    - **Benutzername** → `bmw.username`
    - **Topic** → `bmw.topic`
-5) Build the Docker image (needed for the device-code flow):
+5) Pull the released Docker image:
 
 ```bash
-docker build -t mplabs/bmw-abrp-live-connector .
+docker pull mplabs/bmw-abrp-live-connector:latest
 ```
 
 6) Create the data directory (for tokens):
@@ -99,7 +99,6 @@ docker compose up -d
 Run directly with docker:
 
 ```bash
-docker build -t mplabs/bmw-abrp-live-connector .
 docker run --rm \\
   -v $(pwd)/config.yaml:/config.yaml:ro \\
   -v $(pwd)/data:/data \\
