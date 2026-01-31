@@ -27,7 +27,7 @@ Optional (for local development):
    - `vehicle.vehicle.avgSpeed`
    - `vehicle.powertrain.electric.battery.charging.power`
    - `vehicle.drivetrain.electricEngine.charging.timeRemaining`
-3) Copy the **Client ID** from the portal and run the **device‑code flow** (user code authorization) to generate tokens.
+3) Copy the **Client ID** from the portal (used for the device-code flow).
 4) Copy the stream credentials exactly as shown in the portal:
    - **Host** + **Port** → `mqtt.host` and `mqtt.port`
    - **Benutzername** → `bmw.username`
@@ -38,13 +38,7 @@ Optional (for local development):
 docker pull mplabs/bmw-abrp-live-connector:latest
 ```
 
-6) Create the data directory (for tokens):
-
-```bash
-mkdir -p data
-```
-
-7) Create a real config file (an empty file will fail). Start from the example and fill in:
+6) Create a real config file (an empty file will fail). Start from the example and fill in:
    - `bmw.clientId`, `bmw.username`, `bmw.topic`
    - `mqtt.host`, `mqtt.port`
    - `bmw.tokensFile: "/data/bmw.tokens.json"` (this file lives in the `data/` directory)
@@ -54,27 +48,21 @@ mkdir -p data
 cp config.example.yaml config.yaml
 ```
 
-8) Create the tokens file placeholder (Docker needs the file to exist):
-
-```bash
-touch data/bmw.tokens.json
-```
-
-9) Run the device-code flow to generate tokens
+7) Run the device-code flow to generate tokens (writes to `bmw.tokensFile`, default `/data/bmw.tokens.json`)
 
 ```bash
 docker run --rm -it \\
   -v $(pwd)/config.yaml:/config.yaml:ro \\
-  -v $(pwd)/data:/data \\
+  -v bmw-abrp-live-connector-data:/data \\
   -e CONFIG_PATH=/config.yaml \\
   mplabs/bmw-abrp-live-connector bun run src/cli/device-code.ts
 ```
 
 Hint: This connector only works if **CarData Streaming** is enabled for your client in the myBMW portal.
 
-10) Add ABRP credentials in `config.yaml` and confirm `bmw.tokensFile` points to `/data/bmw.tokens.json`:
+8) Add ABRP credentials in `config.yaml` and confirm `bmw.tokensFile` points to `/data/bmw.tokens.json`:
    - `abrp.apiKey`, `abrp.userToken`
-11) Start the connector with Docker:
+9) Start the connector with Docker:
 
 ```bash
 docker compose up -d
@@ -90,9 +78,7 @@ References:
 Run with docker-compose (recommended):
 
 ```bash
-mkdir -p data
 cp config.example.yaml config.yaml
-touch data/bmw.tokens.json
 docker compose up -d
 ```
 
@@ -101,7 +87,7 @@ Run directly with docker:
 ```bash
 docker run --rm \\
   -v $(pwd)/config.yaml:/config.yaml:ro \\
-  -v $(pwd)/data:/data \\
+  -v bmw-abrp-live-connector-data:/data \\
   -e CONFIG_PATH=/config.yaml \\
   mplabs/bmw-abrp-live-connector
 ```
@@ -189,7 +175,7 @@ Controls log verbosity (`debug`, `info`, `warn`, `error`). Default is `info`.
 BMW streaming messages are event-based and typically carry a single key update. The connector keeps the latest values it has seen and sends a merged snapshot to ABRP whenever SoC is available (and the rate limit allows it).
 
 ## Device code flow notes
-The device-code helper reads `config.yaml` and uses `bmw.clientId`. You can override the OAuth scope via `BMW_SCOPE` (default: `openid cardata cardata.streaming`).
+The device-code helper reads `config.yaml` and uses `bmw.clientId` with the required scope for streaming.
 
 If the device-code response does not include a verification URL, open https://customer.bmwgroup.com/oneid/link and enter the displayed user code.
 

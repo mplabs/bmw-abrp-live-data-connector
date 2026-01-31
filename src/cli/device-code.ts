@@ -1,4 +1,4 @@
-import { readFile, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import YAML from 'yaml'
 import { BMW_DEVICE_CODE_ENDPOINT, BMW_TOKEN_ENDPOINT } from '../bmw/endpoints'
@@ -130,6 +130,7 @@ const main = async () => {
     logger.info('Loading config', { configPath })
     const config = await loadRawConfig(configPath)
     const bmw = (config.bmw ?? {}) as Record<string, unknown>
+    const configDir = path.dirname(configPath)
 
     const clientId = typeof bmw.clientId === 'string' ? bmw.clientId : undefined
     const deviceCodeEndpoint =
@@ -143,8 +144,7 @@ const main = async () => {
         throw new Error('Missing bmw.clientId, bmw.deviceCodeEndpoint, or bmw.tokenEndpoint')
     }
 
-    const scope =
-        process.env.BMW_SCOPE || 'openid cardata:api:read cardata:streaming:read'
+    const scope = 'openid cardata:api:read cardata:streaming:read'
 
     const deviceCode = await requestDeviceCode(
         assertUrl(deviceCodeEndpoint, 'bmw.deviceCodeEndpoint'),
@@ -187,7 +187,15 @@ const main = async () => {
         raw: tokens,
     }
 
-    const outputPath = 'bmw.tokens.json'
+    const tokensFileValue =
+        typeof bmw.tokensFile === 'string' && bmw.tokensFile.length > 0
+            ? bmw.tokensFile
+            : 'bmw.tokens.json'
+    const outputPath = path.isAbsolute(tokensFileValue)
+        ? tokensFileValue
+        : path.join(configDir, tokensFileValue)
+
+    await mkdir(path.dirname(outputPath), { recursive: true })
     await writeFile(outputPath, JSON.stringify(output, null, 2))
 
     logger.info('Tokens stored', { outputPath })
@@ -203,7 +211,7 @@ const main = async () => {
         }
 
         if (typeof bmwConfig.tokensFile !== 'string' || bmwConfig.tokensFile.length === 0) {
-            bmwConfig.tokensFile = outputPath
+            bmwConfig.tokensFile = tokensFileValue
         }
 
         configRoot.bmw = bmwConfig

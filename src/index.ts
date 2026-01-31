@@ -119,9 +119,20 @@ const main = async () => {
             clearInterval(refreshTimer)
             refreshTimer = null
         }
-        client.end(true, () => {
+        const forceExit = setTimeout(() => {
+            logger.warn('Forced shutdown')
             process.exit(0)
-        })
+        }, 5_000)
+
+        try {
+            client.end(true, () => {
+                clearTimeout(forceExit)
+                process.exit(0)
+            })
+        } catch {
+            clearTimeout(forceExit)
+            process.exit(0)
+        }
     }
 
     process.once('SIGINT', () => shutdown('SIGINT'))
