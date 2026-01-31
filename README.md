@@ -47,7 +47,7 @@ mkdir -p data
 7) Create a real config file (an empty file will fail). Start from the example and fill in:
    - `bmw.clientId`, `bmw.username`, `bmw.topic`
    - `mqtt.host`, `mqtt.port`
-   - `bmw.tokensFile: "/data/bmw.tokens.json"`
+   - `bmw.tokensFile: "/data/bmw.tokens.json"` (this file lives in the `data/` directory)
    - (You can fill ABRP later, but the file must be valid YAML.)
 
 ```bash

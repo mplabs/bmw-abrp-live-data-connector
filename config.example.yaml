@@ -4,7 +4,7 @@ bmw:
   username: "<BMW_BENUTZERNAME>"
   # myBMW portal "Topic"
   topic: "<BMW_TOPIC>"
-  tokensFile: "bmw.tokens.json"
+  tokensFile: "/data/bmw.tokens.json"
   deviceCodeEndpoint: "https://customer.bmwgroup.com/gcdm/oauth/device/code"
   tokenEndpoint: "https://customer.bmwgroup.com/gcdm/oauth/token"
 abrp:

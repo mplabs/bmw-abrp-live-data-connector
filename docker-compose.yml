@@ -6,8 +6,5 @@ services:
       CONFIG_PATH: /config.yaml
     volumes:
       - ./config.yaml:/config.yaml:ro
-      - data:/data
+      - ./data:/data
     restart: unless-stopped
-
-volumes:
-  data:
