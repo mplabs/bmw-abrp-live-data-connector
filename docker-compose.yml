@@ -1,6 +1,6 @@
 services:
   abrp-live-connector:
-    build: .
+    image: mplabs/bmw-abrp-live-connector:latest
     container_name: abrp-live-connector
     environment:
       CONFIG_PATH: /config.yaml
