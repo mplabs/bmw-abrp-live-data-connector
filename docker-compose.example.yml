@@ -3,8 +3,8 @@ services:
     build: .
     container_name: abrp-live-connector
     environment:
-      CONFIG_PATH: /config/config.yaml
+      CONFIG_PATH: /config.yaml
     volumes:
-      - ./config:/config:ro
+      - ./config.yaml:/config.yaml:ro
       - ./data:/data
     restart: unless-stopped
