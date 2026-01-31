@@ -77,7 +77,6 @@ Hint: This connector only works if **CarData Streaming** is enabled for your cli
 11) Start the connector with Docker:
 
 ```bash
-cp docker-compose.example.yml docker-compose.yml
 docker compose up -d
 ```
 
@@ -94,7 +93,6 @@ Run with docker-compose (recommended):
 mkdir -p data
 cp config.example.yaml config.yaml
 touch data/bmw.tokens.json
-cp docker-compose.example.yml docker-compose.yml
 docker compose up -d
 ```
 
