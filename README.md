@@ -48,13 +48,13 @@ docker pull mplabs/bmw-abrp-live-connector:latest
 cp config.example.yaml config.yaml
 ```
 
-7) Run the device-code flow to generate tokens (writes to `bmw.tokensFile`, default `/data/bmw.tokens.json`)
+7) Run the device-code flow to generate tokens (writes to `bmw.tokensFile`, default `/data/bmw.tokens.json` when `/data` is mounted)
 
 ```bash
-docker run --rm -it \\
-  -v $(pwd)/config.yaml:/config.yaml:ro \\
-  -v bmw-abrp-live-connector-data:/data \\
-  -e CONFIG_PATH=/config.yaml \\
+docker run --rm -it \
+  -v "$PWD/config.yaml:/config.yaml:ro" \
+  -v bmw-abrp-live-connector-data:/data \
+  -e CONFIG_PATH=/config.yaml \
   mplabs/bmw-abrp-live-connector bun run src/cli/device-code.ts
 ```
 
@@ -85,10 +85,10 @@ docker compose up -d
 Run directly with docker:
 
 ```bash
-docker run --rm \\
-  -v $(pwd)/config.yaml:/config.yaml:ro \\
-  -v bmw-abrp-live-connector-data:/data \\
-  -e CONFIG_PATH=/config.yaml \\
+docker run --rm \
+  -v "$PWD/config.yaml:/config.yaml:ro" \
+  -v bmw-abrp-live-connector-data:/data \
+  -e CONFIG_PATH=/config.yaml \
   mplabs/bmw-abrp-live-connector
 ```
 

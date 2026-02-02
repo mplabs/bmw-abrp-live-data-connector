@@ -1,4 +1,5 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { access, mkdir, readFile, writeFile } from 'node:fs/promises'
+import { constants as fsConstants } from 'node:fs'
 import path from 'node:path'
 import YAML from 'yaml'
 import { BMW_DEVICE_CODE_ENDPOINT, BMW_TOKEN_ENDPOINT } from '../bmw/endpoints'
@@ -187,10 +188,18 @@ const main = async () => {
         raw: tokens,
     }
 
-    const tokensFileValue =
+    let tokensFileValue =
         typeof bmw.tokensFile === 'string' && bmw.tokensFile.length > 0
             ? bmw.tokensFile
-            : 'bmw.tokens.json'
+            : ''
+    if (!tokensFileValue || looksLikePlaceholder(tokensFileValue)) {
+        try {
+            await access('/data', fsConstants.W_OK)
+            tokensFileValue = '/data/bmw.tokens.json'
+        } catch {
+            tokensFileValue = 'bmw.tokens.json'
+        }
+    }
     const outputPath = path.isAbsolute(tokensFileValue)
         ? tokensFileValue
         : path.join(configDir, tokensFileValue)
@@ -215,8 +224,12 @@ const main = async () => {
         }
 
         configRoot.bmw = bmwConfig
-        await writeRawConfig(configPath, configRoot)
-        logger.info('Config updated with GCID and tokensFile', { configPath })
+        try {
+            await writeRawConfig(configPath, configRoot)
+            logger.info('Config updated with GCID and tokensFile', { configPath })
+        } catch (error) {
+            logger.warn('Config update skipped', { error: (error as Error).message })
+        }
     }
 }
 
