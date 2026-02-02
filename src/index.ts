@@ -17,7 +17,7 @@ const main = async () => {
         logLevel: config.logLevel ?? 'info',
     })
 
-    const tokenManager = new BmwTokenManager(config.bmw, configPath)
+    const tokenManager = new BmwTokenManager(config.bmw)
     await tokenManager.refreshIfNeeded()
 
     const abrp = new AbrpClient(config.abrp)

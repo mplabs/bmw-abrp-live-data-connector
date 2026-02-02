@@ -1,8 +1,8 @@
-import { access, mkdir, readFile, writeFile } from 'node:fs/promises'
-import { constants as fsConstants } from 'node:fs'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import YAML from 'yaml'
 import { BMW_DEVICE_CODE_ENDPOINT, BMW_TOKEN_ENDPOINT } from '../bmw/endpoints'
+import { BMW_TOKENS_PATH } from '../bmw/paths'
 import { logger } from '../logger'
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
@@ -131,8 +131,6 @@ const main = async () => {
     logger.info('Loading config', { configPath })
     const config = await loadRawConfig(configPath)
     const bmw = (config.bmw ?? {}) as Record<string, unknown>
-    const configDir = path.dirname(configPath)
-
     const clientId = typeof bmw.clientId === 'string' ? bmw.clientId : undefined
     const deviceCodeEndpoint =
         typeof bmw.deviceCodeEndpoint === 'string'
@@ -188,24 +186,16 @@ const main = async () => {
         raw: tokens,
     }
 
-    let tokensFileValue =
-        typeof bmw.tokensFile === 'string' && bmw.tokensFile.length > 0
-            ? bmw.tokensFile
-            : ''
-    if (!tokensFileValue || looksLikePlaceholder(tokensFileValue)) {
-        try {
-            await access('/data', fsConstants.W_OK)
-            tokensFileValue = '/data/bmw.tokens.json'
-        } catch {
-            tokensFileValue = 'bmw.tokens.json'
-        }
-    }
-    const outputPath = path.isAbsolute(tokensFileValue)
-        ? tokensFileValue
-        : path.join(configDir, tokensFileValue)
+    const outputPath = BMW_TOKENS_PATH
 
-    await mkdir(path.dirname(outputPath), { recursive: true })
-    await writeFile(outputPath, JSON.stringify(output, null, 2))
+    try {
+        await mkdir(path.dirname(outputPath), { recursive: true })
+        await writeFile(outputPath, JSON.stringify(output, null, 2))
+    } catch (error) {
+        throw new Error(
+            `Failed to write tokens to ${outputPath}. Ensure /data is mounted and writable. (${(error as Error).message})`,
+        )
+    }
 
     logger.info('Tokens stored', { outputPath })
 
@@ -215,20 +205,20 @@ const main = async () => {
         const existingUsername =
             typeof bmwConfig.username === 'string' ? bmwConfig.username : ''
 
+        let updated = false
         if (!existingUsername || looksLikePlaceholder(existingUsername)) {
             bmwConfig.username = output.gcid
+            updated = true
         }
 
-        if (typeof bmwConfig.tokensFile !== 'string' || bmwConfig.tokensFile.length === 0) {
-            bmwConfig.tokensFile = tokensFileValue
-        }
-
-        configRoot.bmw = bmwConfig
-        try {
-            await writeRawConfig(configPath, configRoot)
-            logger.info('Config updated with GCID and tokensFile', { configPath })
-        } catch (error) {
-            logger.warn('Config update skipped', { error: (error as Error).message })
+        if (updated) {
+            configRoot.bmw = bmwConfig
+            try {
+                await writeRawConfig(configPath, configRoot)
+                logger.info('Config updated with GCID', { configPath })
+            } catch (error) {
+                logger.warn('Config update skipped', { error: (error as Error).message })
+            }
         }
     }
 }

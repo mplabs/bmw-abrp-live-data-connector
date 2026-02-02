@@ -28,7 +28,6 @@ export type BmwConfig = {
     clientId?: string
     username: string
     topic: string
-    tokensFile?: string
     deviceCodeEndpoint?: string
     tokenEndpoint?: string
     tokens: BmwTokens

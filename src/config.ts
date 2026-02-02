@@ -3,6 +3,7 @@ import path from 'node:path'
 import YAML from 'yaml'
 import { z } from 'zod'
 import { BMW_DEVICE_CODE_ENDPOINT, BMW_TOKEN_ENDPOINT } from './bmw/endpoints'
+import { BMW_TOKENS_PATH } from './bmw/paths'
 import type { AppConfig } from './types'
 
 const parseWithSchema = <T>(schema: z.ZodSchema<T>, data: unknown, name: string): T => {
@@ -33,7 +34,6 @@ const ConfigSchema = z
                 clientId: z.string().min(1),
                 username: z.string().min(1),
                 topic: z.string().min(1),
-                tokensFile: z.string().min(1),
                 deviceCodeEndpoint: z.string().url().optional(),
                 tokenEndpoint: z.string().url().optional(),
             })
@@ -72,25 +72,25 @@ const normalizeConfig = (config: AppConfig): AppConfig => {
     }
 }
 
-const loadTokensFromFile = async (
-    tokensFile: string,
-    configDir: string,
-): Promise<Record<string, unknown>> => {
-    const resolvedPath = path.isAbsolute(tokensFile) ? tokensFile : path.join(configDir, tokensFile)
-    const raw = await readFile(resolvedPath, 'utf8')
-    return JSON.parse(raw) as Record<string, unknown>
+const loadTokensFromFile = async (tokensPath: string): Promise<Record<string, unknown>> => {
+    const resolvedPath = path.isAbsolute(tokensPath) ? tokensPath : path.resolve(tokensPath)
+    try {
+        const raw = await readFile(resolvedPath, 'utf8')
+        return JSON.parse(raw) as Record<string, unknown>
+    } catch (error) {
+        const message = (error as Error).message
+        throw new Error(`Failed to load BMW tokens at ${resolvedPath}: ${message}`)
+    }
 }
 
 export const loadConfig = async (configPath?: string): Promise<AppConfig> => {
     const resolvedPath = configPath || process.env.CONFIG_PATH || 'config.yaml'
     const raw = await readFile(resolvedPath, 'utf8')
     const ext = path.extname(resolvedPath).toLowerCase()
-    const configDir = path.dirname(resolvedPath)
-
     const parsed = ext === '.yaml' || ext === '.yml' ? YAML.parse(raw) : JSON.parse(raw)
 
     const root = parseWithSchema(ConfigSchema, parsed, 'config')
-    const tokensFromFile = await loadTokensFromFile(root.bmw.tokensFile, configDir)
+    const tokensFromFile = await loadTokensFromFile(BMW_TOKENS_PATH)
     const bmwTokens = parseWithSchema(TokensSchema, tokensFromFile, 'bmw.tokens')
     const tls = root.mqtt.tls ?? true
     const brokerUrl = `${tls ? 'mqtts' : 'mqtt'}://${root.mqtt.host}:${root.mqtt.port}`
@@ -100,7 +100,6 @@ export const loadConfig = async (configPath?: string): Promise<AppConfig> => {
             clientId: root.bmw.clientId,
             username: root.bmw.username,
             topic: root.bmw.topic,
-            tokensFile: root.bmw.tokensFile,
             deviceCodeEndpoint: root.bmw.deviceCodeEndpoint ?? BMW_DEVICE_CODE_ENDPOINT,
             tokenEndpoint: root.bmw.tokenEndpoint ?? BMW_TOKEN_ENDPOINT,
             tokens: {

@@ -1,6 +1,6 @@
 import { readFile, writeFile } from 'node:fs/promises'
-import path from 'node:path'
 import { logger } from '../logger'
+import { BMW_TOKENS_PATH } from './paths'
 import type { BmwConfig } from '../types'
 
 type TokenPayload = Record<string, unknown>
@@ -26,8 +26,8 @@ const getExpirySeconds = (token: string): number | null => {
     return typeof exp === 'number' ? exp : null
 }
 
-const loadTokensFromFile = async (tokensFile: string, configDir: string) => {
-    const resolvedPath = path.isAbsolute(tokensFile) ? tokensFile : path.join(configDir, tokensFile)
+const loadTokensFromFile = async () => {
+    const resolvedPath = BMW_TOKENS_PATH
     try {
         const raw = await readFile(resolvedPath, 'utf8')
         return JSON.parse(raw) as Record<string, unknown>
@@ -37,11 +37,9 @@ const loadTokensFromFile = async (tokensFile: string, configDir: string) => {
 }
 
 const saveTokensToFile = async (
-    tokensFile: string,
-    configDir: string,
     tokens: Record<string, unknown>,
 ): Promise<void> => {
-    const resolvedPath = path.isAbsolute(tokensFile) ? tokensFile : path.join(configDir, tokensFile)
+    const resolvedPath = BMW_TOKENS_PATH
     await writeFile(resolvedPath, JSON.stringify(tokens, null, 2))
 }
 
@@ -71,11 +69,8 @@ const refreshTokens = async (config: BmwConfig): Promise<Record<string, unknown>
 
 export class BmwTokenManager {
     private refreshing = false
-    private readonly configDir: string
 
-    constructor(private readonly config: BmwConfig, configPath: string) {
-        this.configDir = path.dirname(configPath)
-    }
+    constructor(private readonly config: BmwConfig) {}
 
     private getExpirySeconds(): number | null {
         return getExpirySeconds(this.config.tokens.id)
@@ -91,7 +86,7 @@ export class BmwTokenManager {
     }
 
     async refreshIfNeeded(graceSeconds = 300): Promise<boolean> {
-        if (!this.config.tokensFile || !this.config.tokenEndpoint) {
+        if (!this.config.tokenEndpoint) {
             return false
         }
         if (!this.config.clientId) {
@@ -123,12 +118,12 @@ export class BmwTokenManager {
                 id: String(refreshed.id),
             }
 
-            const existing = await loadTokensFromFile(this.config.tokensFile, this.configDir)
+            const existing = await loadTokensFromFile()
             const merged = {
                 ...existing,
                 ...refreshed,
             }
-            await saveTokensToFile(this.config.tokensFile, this.configDir, merged)
+            await saveTokensToFile(merged)
             logger.info('BMW tokens refreshed')
             return true
         } catch (error) {

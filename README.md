@@ -41,14 +41,14 @@ docker pull mplabs/bmw-abrp-live-connector:latest
 6) Create a real config file (an empty file will fail). Start from the example and fill in:
    - `bmw.clientId`, `bmw.username`, `bmw.topic`
    - `mqtt.host`, `mqtt.port`
-   - `bmw.tokensFile: "/data/bmw.tokens.json"` (this file lives in the `data/` directory)
    - (You can fill ABRP later, but the file must be valid YAML.)
+   - Remove any old `bmw.tokensFile` entry; tokens are always stored at `/data/bmw.tokens.json`.
 
 ```bash
 cp config.example.yaml config.yaml
 ```
 
-7) Run the device-code flow to generate tokens (writes to `bmw.tokensFile`, default `/data/bmw.tokens.json` when `/data` is mounted)
+7) Run the device-code flow to generate tokens (always stored at `/data/bmw.tokens.json`). Make sure your host folder or volume is mounted to `/data`.
 
 ```bash
 docker run --rm -it \
@@ -60,7 +60,7 @@ docker run --rm -it \
 
 Hint: This connector only works if **CarData Streaming** is enabled for your client in the myBMW portal.
 
-8) Add ABRP credentials in `config.yaml` and confirm `bmw.tokensFile` points to `/data/bmw.tokens.json`:
+8) Add ABRP credentials in `config.yaml`:
    - `abrp.apiKey`, `abrp.userToken`
 9) Start the connector with Docker:
 
@@ -101,6 +101,8 @@ bun run device-code
 bun start
 ```
 
+Note: the tokens file is always `/data/bmw.tokens.json`. If you run locally, make sure `/data` exists and is writable (or run the device-code flow in Docker and keep `/data` mounted).
+
 For live reload:
 
 ```bash
@@ -118,13 +120,12 @@ Use the myBMW portal to fill in these fields:
 - **Benutzername** → `bmw.username`
 - **Topic** → `bmw.topic`
 
-The MQTT password is the **BMW ID token** from `bmw.tokens.json` (created by the device-code flow). The connector uses that automatically.
+The MQTT password is the **BMW ID token** from `/data/bmw.tokens.json` (created by the device-code flow). The connector uses that automatically.
 
 ### `bmw`
 - `clientId`: BMW app client id (required for device code flow)
 - `username`: **Benutzername** from the myBMW portal
 - `topic`: **Topic** from the myBMW portal
-- `tokensFile`: JSON file containing `access`, `refresh`, `id` tokens (required)
 - `deviceCodeEndpoint` / `tokenEndpoint`: Override BMW OAuth endpoints if needed
 
 ### `abrp`
@@ -182,12 +183,12 @@ If the device-code response does not include a verification URL, open https://cu
 To run the device-code flow in Docker, use the command from the setup section above.
 
 ### Token refresh
-The connector refreshes BMW tokens automatically using the refresh token in `bmw.tokens.json`. It updates the tokens file and reconnects MQTT when a new ID token is issued, so you don’t need to re-run the device-code flow during normal operation.
+The connector refreshes BMW tokens automatically using the refresh token in `/data/bmw.tokens.json`. It updates the tokens file and reconnects MQTT when a new ID token is issued, so you don’t need to re-run the device-code flow during normal operation.
 
 ## Security
-- `config.yaml` and `bmw.tokens.json` are in `.gitignore` for a reason. Keep secrets out of git.
+- `config.yaml` and `/data/bmw.tokens.json` are in `.gitignore` for a reason. Keep secrets out of git.
 - Prefer using `config.example.yaml` as a template and store real credentials locally.
-- Use `tokensFile` instead of inline tokens to avoid accidental secret exposure.
+- Keep credentials only in `config.yaml` and the tokens file; do not inline tokens in code or scripts.
 
 ## Docs
 - Functional spec: `BMW-Telemetry-to-ABRP-Live-Connector-FSD.md`

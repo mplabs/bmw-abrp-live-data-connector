@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'bun:test'
-import { mkdir, rm, writeFile } from 'node:fs/promises'
+import { access, mkdir, rm, writeFile } from 'node:fs/promises'
+import { constants as fsConstants } from 'node:fs'
 import path from 'node:path'
 import { tmpdir } from 'node:os'
 import { randomUUID } from 'node:crypto'
@@ -13,12 +14,24 @@ const writeYaml = async (filePath: string, data: string) => {
     await writeFile(filePath, data)
 }
 
+const canUseDataDir = async () => {
+    try {
+        await mkdir('/data', { recursive: true })
+        await access('/data', fsConstants.W_OK)
+        return true
+    } catch {
+        return false
+    }
+}
+
+const maybeIt = (await canUseDataDir()) ? it : it.skip
+
 describe('loadConfig', () => {
-    it('loads tokens from tokensFile', async () => {
+    maybeIt('loads tokens from /data/bmw.tokens.json', async () => {
         const tempDir = path.join(tmpdir(), `abrp-test-${randomUUID()}`)
         await mkdir(tempDir, { recursive: true })
 
-        const tokensPath = path.join(tempDir, 'bmw.tokens.json')
+        const tokensPath = '/data/bmw.tokens.json'
         await writeJson(tokensPath, {
             access: 'access-file',
             refresh: 'refresh-file',
@@ -32,7 +45,6 @@ describe('loadConfig', () => {
   clientId: "client-id"
   username: "username"
   topic: "topic"
-  tokensFile: "bmw.tokens.json"
 abrp:
   apiKey: "api"
   userToken: "user"
@@ -51,10 +63,11 @@ mapping:
         expect(config.bmw.tokens.refresh).toBe('refresh-file')
         expect(config.bmw.tokens.id).toBe('id-file')
 
+        await rm(tokensPath, { force: true })
         await rm(tempDir, { recursive: true, force: true })
     })
 
-    it('requires a tokensFile entry', async () => {
+    maybeIt('throws when /data/bmw.tokens.json is missing', async () => {
         const tempDir = path.join(tmpdir(), `abrp-test-${randomUUID()}`)
         await mkdir(tempDir, { recursive: true })
 
@@ -76,7 +89,8 @@ mapping:
 `,
         )
 
-        await expect(loadConfig(configPath)).rejects.toThrow('bmw.tokensFile')
+        await rm('/data/bmw.tokens.json', { force: true })
+        await expect(loadConfig(configPath)).rejects.toThrow('/data/bmw.tokens.json')
 
         await rm(tempDir, { recursive: true, force: true })
     })
