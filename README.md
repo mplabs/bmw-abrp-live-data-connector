@@ -7,6 +7,7 @@ A Bun-based service that listens to BMW CarData Streaming (MQTT), normalizes the
 - Extracts telemetry (SoC, charging state, location, speed, power, etc.) using configurable JSON-path mappings
 - Sends telemetry to ABRP with built-in rate limiting
 - Includes BMW OAuth device-code helper
+- Optional BMW CarData REST polling (container-based)
 
 ## Requirements
 - Docker + Docker Compose
@@ -133,11 +134,33 @@ The MQTT password is the **BMW ID token** from `/data/bmw.tokens.json` (created 
 - `userToken`: ABRP user token (used as `token` query param)
 
 ### `mqtt`
+- `enabled`: Enable/disable MQTT streaming (default: true)
 - `host`: **Host** from the myBMW portal
 - `port`: **Port** from the myBMW portal
 - `tls`: Enable TLS (default: true)
 - `clientId`: Optional custom client id
 - `keepaliveSeconds`: Keepalive interval (default: 60)
+
+### `bmwRest` (optional polling)
+Enable BMW CarData REST polling to fetch telematic data at intervals.
+
+Example:
+
+```yaml
+bmwRest:
+  enabled: true
+  intervalSeconds: 300
+  containerName: "abrp-live-connector"
+  technicalDescriptors:
+    - "vehicle.drivetrain.batteryManagement.header"
+```
+
+Fields:
+- `enabled`: Turn polling on/off (default: false)
+- `intervalSeconds`: Poll interval in seconds (default: 300)
+- `baseUrl`: Override REST base URL (default: `https://api-cardata.bmwgroup.com`)
+- `containerName`: Name to find/create
+- `technicalDescriptors`: Keys to include when auto-creating a container
 
 ### `mapping`
 Map ABRP telemetry fields to BMW **data keys** (the keys inside the `data` map from the stream). Each field can have multiple fallback keys.

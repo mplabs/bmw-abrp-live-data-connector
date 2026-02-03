@@ -33,8 +33,17 @@ export type BmwConfig = {
     tokens: BmwTokens
 }
 
+export type BmwRestConfig = {
+    enabled: boolean
+    intervalSeconds: number
+    baseUrl: string
+    containerName?: string
+    technicalDescriptors?: string[]
+}
+
 export type MqttConfig = {
     brokerUrl: string
+    enabled?: boolean
     tls?: boolean
     clientId?: string
     keepaliveSeconds?: number
@@ -42,6 +51,7 @@ export type MqttConfig = {
 
 export type AppConfig = {
     bmw: BmwConfig
+    bmwRest: BmwRestConfig
     abrp: AbrpConfig
     mqtt: MqttConfig
     mapping: TelemetryMapping

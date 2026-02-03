@@ -10,11 +10,18 @@ abrp:
   apiKey: "<ABRP_API_KEY>"
   userToken: "<ABRP_USER_TOKEN>"
 mqtt:
+  enabled: true
   # myBMW portal "Host"
   host: "customer.streaming-cardata.bmwgroup.com"
   # myBMW portal "Port"
   port: 9000
   tls: true
+bmwRest:
+  enabled: false
+  # intervalSeconds: 300
+  # containerName: "abrp-live-connector"
+  # technicalDescriptors:
+  #   - "vehicle.drivetrain.batteryManagement.header"
 mapping:
   soc:
     - "vehicle.drivetrain.batteryManagement.header"

@@ -85,7 +85,7 @@ export class BmwTokenManager {
         return exp - now <= graceSeconds
     }
 
-    async refreshIfNeeded(graceSeconds = 300): Promise<boolean> {
+    private async refreshTokens(): Promise<boolean> {
         if (!this.config.tokenEndpoint) {
             return false
         }
@@ -96,10 +96,6 @@ export class BmwTokenManager {
         if (this.refreshing) {
             return false
         }
-        if (!this.isExpired(graceSeconds)) {
-            return false
-        }
-
         this.refreshing = true
         try {
             logger.info('Refreshing BMW tokens')
@@ -132,5 +128,16 @@ export class BmwTokenManager {
         } finally {
             this.refreshing = false
         }
+    }
+
+    async refreshIfNeeded(graceSeconds = 300): Promise<boolean> {
+        if (!this.isExpired(graceSeconds)) {
+            return false
+        }
+        return this.refreshTokens()
+    }
+
+    async refreshNow(): Promise<boolean> {
+        return this.refreshTokens()
     }
 }
