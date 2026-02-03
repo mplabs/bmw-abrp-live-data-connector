@@ -4,11 +4,18 @@ export type Telemetry = {
     is_charging?: boolean
     is_plugged_in?: boolean
     power?: number
+    heading?: number
     lat?: number
     lon?: number
+    elevation?: number
     speed?: number
     charging_power?: number
     remaining_charge_time?: number
+    remaining_range?: number
+    tire_pressure_fl?: number
+    tire_pressure_fr?: number
+    tire_pressure_rl?: number
+    tire_pressure_rr?: number
 }
 
 export type TelemetryMapping = Record<string, string[]>
@@ -41,19 +48,10 @@ export type BmwRestConfig = {
     technicalDescriptors?: string[]
 }
 
-export type MqttConfig = {
-    brokerUrl: string
-    enabled?: boolean
-    tls?: boolean
-    clientId?: string
-    keepaliveSeconds?: number
-}
-
 export type AppConfig = {
     bmw: BmwConfig
     bmwRest: BmwRestConfig
     abrp: AbrpConfig
-    mqtt: MqttConfig
     mapping: TelemetryMapping
     rateLimitSeconds?: number
     logLevel?: 'debug' | 'info' | 'warn' | 'error'

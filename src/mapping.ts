@@ -95,11 +95,17 @@ export const extractTelemetry = (payload: unknown, mapping: TelemetryMapping): T
     const power = toNumber(pickFirstValue(payload, mapping.power))
     if (power !== undefined) telemetry.power = power
 
+    const heading = toNumber(pickFirstValue(payload, mapping.heading))
+    if (heading !== undefined) telemetry.heading = heading
+
     const lat = toNumber(pickFirstValue(payload, mapping.lat))
     if (lat !== undefined) telemetry.lat = lat
 
     const lon = toNumber(pickFirstValue(payload, mapping.lon))
     if (lon !== undefined) telemetry.lon = lon
+
+    const elevation = toNumber(pickFirstValue(payload, mapping.elevation))
+    if (elevation !== undefined) telemetry.elevation = elevation
 
     const speed = toNumber(pickFirstValue(payload, mapping.speed))
     if (speed !== undefined) telemetry.speed = speed
@@ -109,6 +115,21 @@ export const extractTelemetry = (payload: unknown, mapping: TelemetryMapping): T
 
     const remainingChargeTime = toNumber(pickFirstValue(payload, mapping.remaining_charge_time))
     if (remainingChargeTime !== undefined) telemetry.remaining_charge_time = remainingChargeTime
+
+    const remainingRange = toNumber(pickFirstValue(payload, mapping.remaining_range))
+    if (remainingRange !== undefined) telemetry.remaining_range = remainingRange
+
+    const tirePressureFl = toNumber(pickFirstValue(payload, mapping.tire_pressure_fl))
+    if (tirePressureFl !== undefined) telemetry.tire_pressure_fl = tirePressureFl
+
+    const tirePressureFr = toNumber(pickFirstValue(payload, mapping.tire_pressure_fr))
+    if (tirePressureFr !== undefined) telemetry.tire_pressure_fr = tirePressureFr
+
+    const tirePressureRl = toNumber(pickFirstValue(payload, mapping.tire_pressure_rl))
+    if (tirePressureRl !== undefined) telemetry.tire_pressure_rl = tirePressureRl
+
+    const tirePressureRr = toNumber(pickFirstValue(payload, mapping.tire_pressure_rr))
+    if (tirePressureRr !== undefined) telemetry.tire_pressure_rr = tirePressureRr
 
     return telemetry
 }

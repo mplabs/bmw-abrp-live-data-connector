@@ -1,6 +1,5 @@
 import { loadConfig } from './config'
 import { logger, setLogLevel } from './logger'
-import { connectBmwMqtt } from './bmw/mqtt'
 import { BmwTokenManager } from './bmw/tokens'
 import { fetchTelematicData, resolveContainerId } from './bmw/rest'
 import { AbrpClient } from './abrp/client'
@@ -14,7 +13,6 @@ const main = async () => {
 
     logger.info('Config loaded', {
         rateLimitSeconds: config.rateLimitSeconds,
-        mqtt: { brokerUrl: config.mqtt.brokerUrl },
         logLevel: config.logLevel ?? 'info',
     })
 
@@ -24,8 +22,6 @@ const main = async () => {
     const abrp = new AbrpClient(config.abrp)
     const rateLimiter = new RateLimiter(config.rateLimitSeconds ?? 10)
 
-    let messageCount = 0
-    let lastMessageAt: number | null = null
     let lastSocMissingLogAt = 0
     let socMissingCount = 0
     const latest: Record<string, unknown> = {}
@@ -35,11 +31,28 @@ const main = async () => {
         if (incoming.is_plugged_in !== undefined) latest.is_plugged_in = incoming.is_plugged_in
         if (incoming.lat !== undefined) latest.lat = incoming.lat
         if (incoming.lon !== undefined) latest.lon = incoming.lon
+        if (incoming.elevation !== undefined) latest.elevation = incoming.elevation
+        if (incoming.heading !== undefined) latest.heading = incoming.heading
         if (incoming.speed !== undefined) latest.speed = incoming.speed
         if (incoming.power !== undefined) latest.power = incoming.power
         if (incoming.charging_power !== undefined) latest.charging_power = incoming.charging_power
         if (incoming.remaining_charge_time !== undefined) {
             latest.remaining_charge_time = incoming.remaining_charge_time
+        }
+        if (incoming.remaining_range !== undefined) {
+            latest.remaining_range = incoming.remaining_range
+        }
+        if (incoming.tire_pressure_fl !== undefined) {
+            latest.tire_pressure_fl = incoming.tire_pressure_fl
+        }
+        if (incoming.tire_pressure_fr !== undefined) {
+            latest.tire_pressure_fr = incoming.tire_pressure_fr
+        }
+        if (incoming.tire_pressure_rl !== undefined) {
+            latest.tire_pressure_rl = incoming.tire_pressure_rl
+        }
+        if (incoming.tire_pressure_rr !== undefined) {
+            latest.tire_pressure_rr = incoming.tire_pressure_rr
         }
 
         const soc = latest.soc as number | undefined
@@ -70,10 +83,17 @@ const main = async () => {
             is_plugged_in: latest.is_plugged_in as boolean | undefined,
             lat: latest.lat as number | undefined,
             lon: latest.lon as number | undefined,
+            elevation: latest.elevation as number | undefined,
+            heading: latest.heading as number | undefined,
             speed: latest.speed as number | undefined,
             power: latest.power as number | undefined,
             charging_power: latest.charging_power as number | undefined,
             remaining_charge_time: latest.remaining_charge_time as number | undefined,
+            remaining_range: latest.remaining_range as number | undefined,
+            tire_pressure_fl: latest.tire_pressure_fl as number | undefined,
+            tire_pressure_fr: latest.tire_pressure_fr as number | undefined,
+            tire_pressure_rl: latest.tire_pressure_rl as number | undefined,
+            tire_pressure_rr: latest.tire_pressure_rr as number | undefined,
         }
 
         logger.debug('Telemetry snapshot', snapshot)
@@ -83,40 +103,6 @@ const main = async () => {
         } catch (error) {
             logger.error('ABRP telemetry send failed', { error: (error as Error).message })
         }
-    }
-
-    const handleMessage = async (_topic: string, payload: Buffer) => {
-        messageCount += 1
-        const nowMs = Date.now()
-        if (lastMessageAt === null || nowMs - lastMessageAt >= 1000) {
-            const intervalMs = lastMessageAt ? nowMs - lastMessageAt : null
-            logger.debug('MQTT message received', {
-                count: messageCount,
-                bytes: payload.length,
-                intervalMs,
-            })
-            lastMessageAt = nowMs
-        }
-        let parsed: unknown
-        const rawText = payload.toString('utf8')
-        try {
-            parsed = JSON.parse(rawText)
-        } catch (error) {
-            logger.warn('MQTT payload is not valid JSON', {
-                error: (error as Error).message,
-            })
-            return
-        }
-
-        const incoming = extractTelemetry(parsed, config.mapping)
-        await applyTelemetry(incoming, 'mqtt')
-    }
-
-    let client: ReturnType<typeof connectBmwMqtt> | null = null
-    if (config.mqtt.enabled) {
-        client = connectBmwMqtt(config.bmw, config.mqtt, handleMessage)
-    } else {
-        logger.info('MQTT disabled by configuration')
     }
 
     let shuttingDown = false
@@ -139,17 +125,6 @@ const main = async () => {
             process.exit(0)
         }, 5_000)
 
-        if (client) {
-            try {
-                client.end(true, () => {
-                    clearTimeout(forceExit)
-                    process.exit(0)
-                })
-                return
-            } catch {
-                // fall through to exit
-            }
-        }
         clearTimeout(forceExit)
         process.exit(0)
     }
@@ -212,13 +187,7 @@ const main = async () => {
         if (shuttingDown) {
             return
         }
-        const refreshed = await tokenManager.refreshIfNeeded()
-        if (refreshed && config.mqtt.enabled) {
-            if (client) {
-                client.end(true)
-            }
-            client = connectBmwMqtt(config.bmw, config.mqtt, handleMessage)
-        }
+        await tokenManager.refreshIfNeeded()
     }, 60_000)
 }
 

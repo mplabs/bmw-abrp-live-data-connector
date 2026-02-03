@@ -9,15 +9,8 @@ bmw:
 abrp:
   apiKey: "<ABRP_API_KEY>"
   userToken: "<ABRP_USER_TOKEN>"
-mqtt:
-  enabled: true
-  # myBMW portal "Host"
-  host: "customer.streaming-cardata.bmwgroup.com"
-  # myBMW portal "Port"
-  port: 9000
-  tls: true
 bmwRest:
-  enabled: false
+  enabled: true
   # intervalSeconds: 300
   # containerName: "abrp-live-connector"
   # technicalDescriptors:
@@ -43,5 +36,19 @@ mapping:
   remaining_charge_time:
     - "vehicle.drivetrain.electricEngine.charging.timeRemaining"
     - "vehicle.drivetrain.electricEngine.charging.timeToFullyCharged"
+  heading:
+    - "vehicle.cabin.infotainment.navigation.currentLocation.heading"
+  elevation:
+    - "vehicle.cabin.infotainment.navigation.currentLocation.altitude"
+  remaining_range:
+    - "vehicle.cabin.infotainment.navigation.remainingRange"
+  tire_pressure_fl:
+    - "vehicle.chassis.axle.row1.wheel.left.tire.pressure"
+  tire_pressure_fr:
+    - "vehicle.chassis.axle.row1.wheel.right.tire.pressure"
+  tire_pressure_rl:
+    - "vehicle.chassis.axle.row2.wheel.left.tire.pressure"
+  tire_pressure_rr:
+    - "vehicle.chassis.axle.row2.wheel.right.tire.pressure"
 rateLimitSeconds: 10
 logLevel: "info"

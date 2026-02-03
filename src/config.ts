@@ -45,16 +45,6 @@ const ConfigSchema = z
                 userToken: z.string().min(1),
             })
             .strict(),
-        mqtt: z
-            .object({
-                enabled: z.boolean().optional(),
-                host: z.string().min(1),
-                port: z.number().int().positive(),
-                tls: z.boolean().optional(),
-                clientId: z.string().optional(),
-                keepaliveSeconds: z.number().int().optional(),
-            })
-            .strict(),
         bmwRest: z
             .object({
                 enabled: z.boolean().optional(),
@@ -74,12 +64,6 @@ const ConfigSchema = z
 const normalizeConfig = (config: AppConfig): AppConfig => {
     return {
         ...config,
-        mqtt: {
-            ...config.mqtt,
-            enabled: config.mqtt.enabled ?? true,
-            tls: config.mqtt.tls ?? true,
-            keepaliveSeconds: config.mqtt.keepaliveSeconds ?? 60,
-        },
         bmwRest: {
             ...config.bmwRest,
             enabled: config.bmwRest.enabled ?? false,
@@ -111,9 +95,6 @@ export const loadConfig = async (configPath?: string): Promise<AppConfig> => {
     const root = parseWithSchema(ConfigSchema, parsed, 'config')
     const tokensFromFile = await loadTokensFromFile(BMW_TOKENS_PATH)
     const bmwTokens = parseWithSchema(TokensSchema, tokensFromFile, 'bmw.tokens')
-    const tls = root.mqtt.tls ?? true
-    const brokerUrl = `${tls ? 'mqtts' : 'mqtt'}://${root.mqtt.host}:${root.mqtt.port}`
-
     const config: AppConfig = {
         bmw: {
             clientId: root.bmw.clientId,
@@ -137,13 +118,6 @@ export const loadConfig = async (configPath?: string): Promise<AppConfig> => {
         abrp: {
             apiKey: root.abrp.apiKey,
             userToken: root.abrp.userToken,
-        },
-        mqtt: {
-            brokerUrl,
-            enabled: root.mqtt.enabled,
-            tls,
-            clientId: root.mqtt.clientId,
-            keepaliveSeconds: root.mqtt.keepaliveSeconds,
         },
         mapping: root.mapping,
         rateLimitSeconds: root.rateLimitSeconds,
