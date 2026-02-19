@@ -1,6 +1,6 @@
 {
   "name": "abrp-live-data-connector",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "private": true,
   "type": "module",
   "scripts": {
@@ -13,6 +13,7 @@
     "debug:token": "bun -e \"const t=require('./bmw.tokens.json').id; const payload=t.split('.')[1]; const base=payload.replace(/-/g,'+').replace(/_/g,'/'); const padded=base + '='.repeat((4 - base.length % 4) % 4); const p=JSON.parse(Buffer.from(padded,'base64').toString()); console.log({exp:p.exp, now:Math.floor(Date.now()/1000), dynamic_scopes:p.dynamic_scopes, scp:p.scp, scope:p.scope});\""
   },
   "dependencies": {
+    "mqtt": "^5.5.0",
     "zod": "^3.24.1",
     "yaml": "^2.4.5"
   },

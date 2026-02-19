@@ -33,7 +33,7 @@ export type BmwTokens = {
 
 export type BmwConfig = {
     clientId?: string
-    username: string
+    username?: string
     topic: string
     deviceCodeEndpoint?: string
     tokenEndpoint?: string
@@ -48,10 +48,23 @@ export type BmwRestConfig = {
     technicalDescriptors?: string[]
 }
 
+export type MqttConfig = {
+    source?: 'bmw' | 'mirror'
+    brokerUrl: string
+    enabled?: boolean
+    tls?: boolean
+    clientId?: string
+    keepaliveSeconds?: number
+    username?: string
+    password?: string
+    topicPrefix?: string
+}
+
 export type AppConfig = {
     bmw: BmwConfig
     bmwRest: BmwRestConfig
     abrp: AbrpConfig
+    mqtt: MqttConfig
     mapping: TelemetryMapping
     rateLimitSeconds?: number
     logLevel?: 'debug' | 'info' | 'warn' | 'error'

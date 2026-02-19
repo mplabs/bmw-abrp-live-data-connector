@@ -1,6 +1,7 @@
 import { loadConfig } from './config'
 import { logger, setLogLevel } from './logger'
 import { BmwTokenManager } from './bmw/tokens'
+import { connectBmwMqtt } from './bmw/mqtt'
 import { fetchTelematicData, resolveContainerId } from './bmw/rest'
 import { AbrpClient } from './abrp/client'
 import { extractTelemetry } from './mapping'
@@ -16,8 +17,14 @@ const main = async () => {
         logLevel: config.logLevel ?? 'info',
     })
 
-    const tokenManager = new BmwTokenManager(config.bmw)
-    await tokenManager.refreshIfNeeded()
+    const bmwAuthRequired =
+        config.bmwRest.enabled ||
+        (config.mqtt.enabled && (config.mqtt.source ?? 'bmw') === 'bmw')
+
+    const tokenManager = bmwAuthRequired ? new BmwTokenManager(config.bmw) : null
+    if (tokenManager) {
+        await tokenManager.refreshIfNeeded()
+    }
 
     const abrp = new AbrpClient(config.abrp)
     const rateLimiter = new RateLimiter(config.rateLimitSeconds ?? 10)
@@ -25,6 +32,9 @@ const main = async () => {
     let lastSocMissingLogAt = 0
     let socMissingCount = 0
     const latest: Record<string, unknown> = {}
+
+    let mqttMessageCount = 0
+    let lastMqttMessageAt: number | null = null
     const applyTelemetry = async (incoming: ReturnType<typeof extractTelemetry>, source: string) => {
         if (incoming.soc !== undefined) latest.soc = incoming.soc
         if (incoming.is_charging !== undefined) latest.is_charging = incoming.is_charging
@@ -105,6 +115,37 @@ const main = async () => {
         }
     }
 
+    const handleMqttMessage = (topic: string, payload: Buffer) => {
+        void (async () => {
+            mqttMessageCount += 1
+            const now = Date.now()
+            const intervalMs = lastMqttMessageAt === null ? null : now - lastMqttMessageAt
+            lastMqttMessageAt = now
+            logger.debug('MQTT message received', {
+                count: mqttMessageCount,
+                bytes: payload.length,
+                intervalMs,
+            })
+
+            const payloadText = payload.toString('utf8')
+            logger.debug('MQTT raw payload', {
+                bytes: payload.length,
+                payload: payloadText,
+            })
+
+            let decoded: unknown
+            try {
+                decoded = JSON.parse(payloadText)
+            } catch (error) {
+                logger.warn('MQTT payload parse failed', { error: (error as Error).message })
+                return
+            }
+
+            const incoming = extractTelemetry(decoded, config.mapping)
+            await applyTelemetry(incoming, 'mqtt')
+        })()
+    }
+
     let shuttingDown = false
     const shutdown = (signal: NodeJS.Signals) => {
         if (shuttingDown) {
@@ -112,6 +153,10 @@ const main = async () => {
         }
         shuttingDown = true
         logger.info('Shutting down', { signal })
+        if (mqttClient) {
+            mqttClient.end(true)
+            mqttClient = null
+        }
         if (refreshTimer) {
             clearInterval(refreshTimer)
             refreshTimer = null
@@ -134,6 +179,18 @@ const main = async () => {
 
     let restTimer: NodeJS.Timeout | null = null
     let restContainerId: string | null = null
+    let mqttClient: ReturnType<typeof connectBmwMqtt> | null = null
+
+    const connectMqtt = (logWhenDisabled = false) => {
+        if (!config.mqtt.enabled) {
+            if (logWhenDisabled) {
+                logger.info('MQTT disabled')
+            }
+            return
+        }
+        mqttClient?.end(true)
+        mqttClient = connectBmwMqtt(config.bmw, config.mqtt, handleMqttMessage)
+    }
 
     const startRestPolling = async () => {
         if (!config.bmwRest.enabled) {
@@ -163,12 +220,13 @@ const main = async () => {
                 const err = error as Error & { status?: number }
                 logger.error('BMW REST poll failed', { error: err.message, status: err.status })
                 if (err.status === 401) {
-                    const refreshed = await tokenManager.refreshNow()
+                    const refreshed = tokenManager ? await tokenManager.refreshNow() : false
                     if (refreshed) {
                         restContainerId = await resolveContainerId(
                             config.bmwRest,
                             config.bmw,
                         )
+                        connectMqtt()
                     }
                 }
             }
@@ -182,13 +240,19 @@ const main = async () => {
     }
 
     await startRestPolling()
+    connectMqtt(true)
 
-    let refreshTimer: NodeJS.Timeout | null = setInterval(async () => {
-        if (shuttingDown) {
-            return
-        }
-        await tokenManager.refreshIfNeeded()
-    }, 60_000)
+    let refreshTimer: NodeJS.Timeout | null = tokenManager
+        ? setInterval(async () => {
+              if (shuttingDown) {
+                  return
+              }
+              const refreshed = await tokenManager.refreshIfNeeded()
+              if (refreshed && config.mqtt.enabled) {
+                  connectMqtt()
+              }
+          }, 60_000)
+        : null
 }
 
 main().catch((error) => {

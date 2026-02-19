@@ -1,24 +1,26 @@
 # BMW -> ABRP Live Data Connector
 
-A Bun-based service that polls BMW CarData REST, normalizes the telemetry, and forwards it to the ABRP Telemetry API.
+A Bun-based service that streams BMW CarData MQTT (and optionally polls BMW CarData REST), normalizes the telemetry, and forwards it to the ABRP Telemetry API.
 
 ## Features
-- Polls BMW CarData REST for telematic data
+- Streams BMW CarData MQTT in near real time
+- Supports mirrored BMW MQTT data from a custom broker (for example via `bmw-mqtt-bridge`)
+- Optionally polls BMW CarData REST for telematic data
 - Extracts telemetry (SoC, charging state, location, speed, power, etc.) using configurable JSON-path mappings
 - Sends telemetry to ABRP with built-in rate limiting
 - Includes BMW OAuth device-code helper
 
 ## Requirements
 - Docker + Docker Compose
-- BMW CarData REST setup (clientId + myBMW portal credentials: Topic, Benutzername)
+- Either direct BMW CarData Streaming setup, or a mirrored MQTT feed containing BMW raw payloads
 - ABRP API key + user token
 
 Optional (for local development):
 - Bun (runtime)
 
-## Setup (myBMW CarData REST)
+## Setup (myBMW CarData Streaming)
 1) Create a BMW CarData client and subscribe it to **CarData** in the myBMW portal: https://www.bmw.de/de-de/mybmw/mapped-vehicle/public/car-data-info/
-2) Choose the telematic keys you want to query (minimum set for ABRP):
+2) Choose the telematic keys you want to stream (minimum set for ABRP):
    - `vehicle.drivetrain.batteryManagement.header` (SoC)
    - `vehicle.drivetrain.electricEngine.charging.status`
    - `vehicle.body.chargingPort.status`
@@ -29,6 +31,8 @@ Optional (for local development):
    - `vehicle.drivetrain.electricEngine.charging.timeRemaining`
 3) Copy the **Client ID** from the portal (used for the device-code flow).
 4) Copy the portal credentials exactly as shown:
+   - **Host** → `mqtt.host`
+   - **Port** → `mqtt.port`
    - **Benutzername** → `bmw.username`
    - **Topic** → `bmw.topic`
 5) Pull the released Docker image:
@@ -39,8 +43,7 @@ docker pull mplabs/bmw-abrp-live-connector:latest
 
 6) Create a real config file (an empty file will fail). Start from the example and fill in:
    - `bmw.clientId`, `bmw.username`, `bmw.topic`
-   - `bmwRest.enabled: true`
-   - `bmwRest.technicalDescriptors` (use the keys you want to query; see step 2)
+   - `mqtt.host`, `mqtt.port`
    - (You can fill ABRP later, but the file must be valid YAML.)
    - Remove any old `bmw.tokensFile` entry; tokens are always stored at `/data/bmw.tokens.json`.
 
@@ -68,11 +71,31 @@ Hint: This connector only works if **CarData** access is enabled for your client
 docker compose up -d
 ```
 
+Optional (REST polling):
+- Set `bmwRest.enabled: true`
+- Set `bmwRest.technicalDescriptors` to the keys you want (same list as step 2)
+
 References:
 - https://www.bmw.de/de-de/mybmw/mapped-vehicle/public/car-data-info/
 - https://bmw-cardata.bmwgroup.com/customer/public/api-documentation/Id-Streaming
 - https://bmw-cardata.bmwgroup.com/customer/public/api-specification
 - https://documenter.getpostman.com/view/7396339/SWTK5a8w
+
+## Setup (mirrored MQTT broker)
+If you mirror BMW payloads to another broker (for example with https://dj0abr.github.io/bmw-mqtt-bridge/), configure MQTT like this:
+
+```yaml
+mqtt:
+  source: "mirror"
+  host: "<MIRROR_BROKER_HOST>"
+  port: 1883
+  tls: false
+  topicPrefix: "bmw/"
+  # username: "optional"
+  # password: "optional"
+```
+
+The connector subscribes to `<topicPrefix>raw/<bmw.topic>/#` and expects the raw BMW JSON payload on those topics.
 
 ## Docker (VPS deployment)
 Run with docker-compose (recommended):
@@ -101,7 +124,7 @@ bun run device-code
 bun start
 ```
 
-Note: the tokens file is always `/data/bmw.tokens.json`. If you run locally, make sure `/data` exists and is writable (or run the device-code flow in Docker and keep `/data` mounted).
+Note: `/data/bmw.tokens.json` is required when using direct BMW MQTT (`mqtt.source: bmw`) or BMW REST polling. Mirror-only MQTT mode does not require BMW tokens.
 
 For live reload:
 
@@ -113,8 +136,10 @@ bun run dev
 The app loads `config.yaml` by default. Override with `CONFIG_PATH=/path/to/config.yaml`.
 
 ### Values from the myBMW CarData portal
-Use the myBMW portal to fill in these fields:
+Use the myBMW portal to fill in these fields when `mqtt.source: bmw`:
 
+- **Host** → `mqtt.host`
+- **Port** → `mqtt.port`
 - **Benutzername** → `bmw.username`
 - **Topic** → `bmw.topic`
 
@@ -122,7 +147,7 @@ The REST API uses the **BMW access token** from `/data/bmw.tokens.json` (created
 
 ### `bmw`
 - `clientId`: BMW app client id (required for device code flow)
-- `username`: **Benutzername** from the myBMW portal
+- `username`: **Benutzername** from the myBMW portal (required when `mqtt.source: bmw`)
 - `topic`: **Topic** from the myBMW portal
 - `deviceCodeEndpoint` / `tokenEndpoint`: Override BMW OAuth endpoints if needed
 
@@ -130,8 +155,35 @@ The REST API uses the **BMW access token** from `/data/bmw.tokens.json` (created
 - `apiKey`: ABRP API key
 - `userToken`: ABRP user token (used as `token` query param)
 
+### `mqtt`
+MQTT input configuration (direct BMW or mirrored source).
+
+Example:
+
+```yaml
+mqtt:
+  source: "bmw"
+  enabled: true
+  host: "customer.streaming-cardata.bmwgroup.com"
+  port: 9000
+  tls: true
+  topicPrefix: "bmw/"
+```
+
+Fields:
+- `source`: `bmw` (default) or `mirror`
+- `enabled`: Turn streaming on/off (default: true)
+- `host`: Broker host (myBMW Host for `bmw` mode)
+- `port`: Broker port (myBMW Port for `bmw` mode)
+- `tls`: Use TLS (`mqtts://`) when true (default: true)
+- `topicPrefix`: Mirror base prefix (default: `bmw/`), used only in `mirror` mode
+- `username`: Optional broker username override
+- `password`: Optional broker password override
+- `clientId`: Optional MQTT client id
+- `keepaliveSeconds`: Keepalive interval (default: 60)
+
 ### `bmwRest`
-BMW CarData REST polling configuration (enabled by default in `config.example.yaml`).
+BMW CarData REST polling configuration (disabled by default in `config.example.yaml`).
 
 Example:
 
@@ -192,7 +244,7 @@ Minimum seconds between ABRP telemetry pushes (default: 10).
 Controls log verbosity (`debug`, `info`, `warn`, `error`). Default is `info`.
 
 ## Telemetry flow
-BMW REST responses are polled and typically carry the requested key set. The connector keeps the latest values it has seen and sends a merged snapshot to ABRP whenever SoC is available (and the rate limit allows it).
+BMW MQTT streaming and/or REST responses are merged into the latest snapshot. The connector sends a merged snapshot to ABRP whenever SoC is available (and the rate limit allows it).
 
 ## Device code flow notes
 The device-code helper reads `config.yaml` and uses `bmw.clientId` with the required scope for CarData.
@@ -202,7 +254,7 @@ If the device-code response does not include a verification URL, open https://cu
 To run the device-code flow in Docker, use the command from the setup section above.
 
 ### Token refresh
-The connector refreshes BMW tokens automatically using the refresh token in `/data/bmw.tokens.json`. It updates the tokens file so you don’t need to re-run the device-code flow during normal operation.
+When BMW auth is in use (`mqtt.source: bmw` or `bmwRest.enabled: true`), the connector refreshes tokens automatically using `/data/bmw.tokens.json`.
 
 ## Security
 - `config.yaml` and `/data/bmw.tokens.json` are in `.gitignore` for a reason. Keep secrets out of git.
@@ -213,8 +265,9 @@ The connector refreshes BMW tokens automatically using the refresh token in `/da
 - Functional spec: `BMW-Telemetry-to-ABRP-Live-Connector-FSD.md`
 
 ## Troubleshooting
-- If no data is flowing, verify `bmw.username` and `bmw.topic`.
-- If REST says `Not authorized`, re-run the device-code flow to refresh tokens.
+- If no data is flowing in `bmw` mode, verify `bmw.username` and `bmw.topic`.
+- If no data is flowing in `mirror` mode, verify `mqtt.topicPrefix` and that mirrored topics exist at `<topicPrefix>raw/<bmw.topic>/#`.
+- If MQTT or REST says `Not authorized`, re-run the device-code flow to refresh tokens.
 - If ABRP rejects data, confirm your API key + user token and check mapping field names.
 - To inspect the ID token expiry/scopes, run `bun run debug:token`.
 - Enable extra logging by inspecting the console output; all logs are structured JSON.

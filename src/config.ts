@@ -32,8 +32,8 @@ const ConfigSchema = z
     .object({
         bmw: z
             .object({
-                clientId: z.string().min(1),
-                username: z.string().min(1),
+                clientId: z.string().min(1).optional(),
+                username: z.string().min(1).optional(),
                 topic: z.string().min(1),
                 deviceCodeEndpoint: z.string().url().optional(),
                 tokenEndpoint: z.string().url().optional(),
@@ -43,6 +43,20 @@ const ConfigSchema = z
             .object({
                 apiKey: z.string().min(1),
                 userToken: z.string().min(1),
+            })
+            .strict(),
+        mqtt: z
+            .object({
+                source: z.enum(['bmw', 'mirror']).optional(),
+                enabled: z.boolean().optional(),
+                host: z.string().min(1),
+                port: z.number().int().positive(),
+                tls: z.boolean().optional(),
+                clientId: z.string().optional(),
+                keepaliveSeconds: z.number().int().optional(),
+                username: z.string().min(1).optional(),
+                password: z.string().min(1).optional(),
+                topicPrefix: z.string().min(1).optional(),
             })
             .strict(),
         bmwRest: z
@@ -64,6 +78,14 @@ const ConfigSchema = z
 const normalizeConfig = (config: AppConfig): AppConfig => {
     return {
         ...config,
+        mqtt: {
+            ...config.mqtt,
+            source: config.mqtt.source ?? 'bmw',
+            enabled: config.mqtt.enabled ?? true,
+            tls: config.mqtt.tls ?? true,
+            keepaliveSeconds: config.mqtt.keepaliveSeconds ?? 60,
+            topicPrefix: config.mqtt.topicPrefix ?? 'bmw/',
+        },
         bmwRest: {
             ...config.bmwRest,
             enabled: config.bmwRest.enabled ?? false,
@@ -73,6 +95,12 @@ const normalizeConfig = (config: AppConfig): AppConfig => {
         rateLimitSeconds: config.rateLimitSeconds ?? 10,
         logLevel: config.logLevel ?? 'info',
     }
+}
+
+const EMPTY_BMW_TOKENS = {
+    access: '',
+    refresh: '',
+    id: '',
 }
 
 const loadTokensFromFile = async (tokensPath: string): Promise<Record<string, unknown>> => {
@@ -93,8 +121,24 @@ export const loadConfig = async (configPath?: string): Promise<AppConfig> => {
     const parsed = ext === '.yaml' || ext === '.yml' ? YAML.parse(raw) : JSON.parse(raw)
 
     const root = parseWithSchema(ConfigSchema, parsed, 'config')
-    const tokensFromFile = await loadTokensFromFile(BMW_TOKENS_PATH)
-    const bmwTokens = parseWithSchema(TokensSchema, tokensFromFile, 'bmw.tokens')
+    const mqttSource = root.mqtt.source ?? 'bmw'
+    const mqttEnabled = root.mqtt.enabled ?? true
+    const bmwRestEnabled = root.bmwRest?.enabled ?? false
+    const needsBmwTokens = (mqttEnabled && mqttSource === 'bmw') || bmwRestEnabled
+
+    if (mqttEnabled && mqttSource === 'bmw' && !root.bmw.username) {
+        throw new Error('config validation failed: bmw.username is required when mqtt.source is "bmw"')
+    }
+
+    const bmwTokens = needsBmwTokens
+        ? parseWithSchema(
+              TokensSchema,
+              await loadTokensFromFile(BMW_TOKENS_PATH),
+              'bmw.tokens',
+          )
+        : EMPTY_BMW_TOKENS
+    const tls = root.mqtt.tls ?? true
+    const brokerUrl = `${tls ? 'mqtts' : 'mqtt'}://${root.mqtt.host}:${root.mqtt.port}`
     const config: AppConfig = {
         bmw: {
             clientId: root.bmw.clientId,
@@ -109,15 +153,26 @@ export const loadConfig = async (configPath?: string): Promise<AppConfig> => {
             },
         },
         bmwRest: {
-            enabled: root.bmwRest?.enabled,
-            intervalSeconds: root.bmwRest?.intervalSeconds,
-            baseUrl: root.bmwRest?.baseUrl,
+            enabled: root.bmwRest?.enabled ?? false,
+            intervalSeconds: root.bmwRest?.intervalSeconds ?? 300,
+            baseUrl: root.bmwRest?.baseUrl ?? BMW_REST_BASE_URL,
             containerName: root.bmwRest?.containerName,
             technicalDescriptors: root.bmwRest?.technicalDescriptors,
         },
         abrp: {
             apiKey: root.abrp.apiKey,
             userToken: root.abrp.userToken,
+        },
+        mqtt: {
+            source: mqttSource,
+            brokerUrl,
+            enabled: root.mqtt.enabled,
+            tls,
+            clientId: root.mqtt.clientId,
+            keepaliveSeconds: root.mqtt.keepaliveSeconds,
+            username: root.mqtt.username,
+            password: root.mqtt.password,
+            topicPrefix: root.mqtt.topicPrefix,
         },
         mapping: root.mapping,
         rateLimitSeconds: root.rateLimitSeconds,

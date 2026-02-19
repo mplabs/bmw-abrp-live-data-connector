@@ -27,6 +27,39 @@ const canUseDataDir = async () => {
 const maybeIt = (await canUseDataDir()) ? it : it.skip
 
 describe('loadConfig', () => {
+    it('allows mirror MQTT mode without /data/bmw.tokens.json', async () => {
+        const tempDir = path.join(tmpdir(), `abrp-test-${randomUUID()}`)
+        await mkdir(tempDir, { recursive: true })
+
+        const configPath = path.join(tempDir, 'config.yaml')
+        await writeYaml(
+            configPath,
+            `bmw:
+  topic: "WBY71AW050FN29092"
+abrp:
+  apiKey: "api"
+  userToken: "user"
+mqtt:
+  source: "mirror"
+  host: "broker"
+  port: 1883
+mapping:
+  soc: ["vehicle.soc"]
+`,
+        )
+
+        const config = await loadConfig(configPath)
+        expect(config.mqtt.source).toBe('mirror')
+        expect(config.mqtt.topicPrefix).toBe('bmw/')
+        expect(config.bmw.tokens).toEqual({
+            access: '',
+            refresh: '',
+            id: '',
+        })
+
+        await rm(tempDir, { recursive: true, force: true })
+    })
+
     maybeIt('loads tokens from /data/bmw.tokens.json', async () => {
         const tempDir = path.join(tmpdir(), `abrp-test-${randomUUID()}`)
         await mkdir(tempDir, { recursive: true })
@@ -48,6 +81,9 @@ describe('loadConfig', () => {
 abrp:
   apiKey: "api"
   userToken: "user"
+mqtt:
+  host: "broker"
+  port: 9000
 mapping:
   soc: ["vehicle.soc"]
 `,
@@ -77,6 +113,9 @@ mapping:
 abrp:
   apiKey: "api"
   userToken: "user"
+mqtt:
+  host: "broker"
+  port: 9000
 mapping:
   soc: ["vehicle.soc"]
 `,

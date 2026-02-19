@@ -9,8 +9,23 @@ bmw:
 abrp:
   apiKey: "<ABRP_API_KEY>"
   userToken: "<ABRP_USER_TOKEN>"
-bmwRest:
+mqtt:
+  # "bmw" subscribes to "<bmw.username>/<bmw.topic>/#"
+  # "mirror" subscribes to "<topicPrefix>raw/<bmw.topic>/#"
+  source: "bmw"
   enabled: true
+  # myBMW portal "Host"
+  host: "customer.streaming-cardata.bmwgroup.com"
+  # myBMW portal "Port"
+  port: 9000
+  tls: true
+  # topicPrefix: "bmw/"
+  # username: "optional-mqtt-username"
+  # password: "optional-mqtt-password"
+  # clientId: "optional-client-id"
+  # keepaliveSeconds: 60
+bmwRest:
+  enabled: false
   # intervalSeconds: 300
   # containerName: "abrp-live-connector"
   # technicalDescriptors:
